@@ -1,13 +1,13 @@
 {
   "buildCommand": "npm install && npm run build && cd backend && npm install",
   "functions": {
-    "backend/api/index.js": {
+    "server.js": {
       "maxDuration": 15,
       "memory": 512,
       "includeFiles": "out/**"
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/backend/api/index" }
+    { "source": "/(.*)", "destination": "/server.js" }
   ]
 }
