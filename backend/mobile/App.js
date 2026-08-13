@@ -22,8 +22,13 @@ import WorkoutScreen from './src/screens/WorkoutScreen';
 import FoodScreen from './src/screens/FoodScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import AccountScreen from './src/screens/AccountScreen';
+import SimpleAccountScreen from './src/screens/SimpleAccountScreen';
 import CheckInScreen from './src/screens/CheckInScreen';
 import GymPassScreen from './src/screens/GymPassScreen';
+import TrainerClientsScreen from './src/screens/TrainerClientsScreen';
+import TrainerEarningsScreen from './src/screens/TrainerEarningsScreen';
+import AdminMembersScreen from './src/screens/AdminMembersScreen';
+import AdminAddMemberScreen from './src/screens/AdminAddMemberScreen';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -68,10 +73,11 @@ export default function App() {
         {signedIn ? (
           <RootStack.Navigator screenOptions={{ headerShown: false }}>
             <RootStack.Screen name="Tabs">
-              {() => <TabShell onLogout={() => setSignedIn(false)} />}
+              {() => <AppShell onLogout={() => setSignedIn(false)} />}
             </RootStack.Screen>
             <RootStack.Screen name="CheckIn" component={CheckInScreen} options={{ presentation: 'fullScreenModal' }} />
             <RootStack.Screen name="GymPass" component={GymPassScreen} options={{ presentation: 'modal', headerShown: true, title: 'Gym Pass' }} />
+            <RootStack.Screen name="AdminAddMember" component={AdminAddMemberScreen} options={{ presentation: 'modal', headerShown: true, title: 'Add Member' }} />
           </RootStack.Navigator>
         ) : (
           <LoginScreen onSignedIn={() => setSignedIn(true)} />
@@ -81,24 +87,19 @@ export default function App() {
   );
 }
 
-function TabShell({ onLogout }) {
+// Fetches /api/me once, then routes to a role-specific tab set — a member,
+// a trainer, and an admin/staff account see three genuinely different apps,
+// matching how the website has separate dashboards per role.
+function AppShell({ onLogout }) {
   const [user, setUser] = useState(null);
-  const [foodDay, setFoodDay] = useState(null);
-  const [baseUrl, setBaseUrl] = useState('');
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [u, food, b] = await Promise.all([
-        api('/api/me'),
-        api('/api/me/food').catch(() => null),
-        Session.getBaseUrl(),
-      ]);
+      const u = await api('/api/me');
       setUser(u);
-      setFoodDay(food);
-      setBaseUrl(b);
       setError(null);
     } catch (e) {
       setError(e.message);
@@ -109,6 +110,39 @@ function TabShell({ onLogout }) {
   }, [onLogout]);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  if (!user) {
+    return (
+      <View style={styles.splash}>
+        {error ? (
+          <>
+            <Ionicons name="cloud-offline" size={40} color={colors.outline} />
+            <Text style={styles.errorTitle}>Couldn't reach the server</Text>
+            <Text style={styles.errorBody}>{error}</Text>
+            <Text style={styles.errorHint}>
+              Make sure the backend is running and your phone can reach it.
+            </Text>
+          </>
+        ) : (
+          <ActivityIndicator color={colors.primary} size="large" />
+        )}
+      </View>
+    );
+  }
+
+  if (user.role === 'trainer') return <TrainerTabs user={user} refresh={refresh} onLogout={onLogout} />;
+  if (user.role === 'admin' || user.role === 'staff') return <AdminTabs user={user} refresh={refresh} onLogout={onLogout} />;
+  return <MemberTabs user={user} refresh={refresh} refreshing={refreshing} onLogout={onLogout} />;
+}
+
+function MemberTabs({ user, refresh, refreshing, onLogout }) {
+  const [foodDay, setFoodDay] = useState(null);
+  const [baseUrl, setBaseUrl] = useState('');
+
+  useEffect(() => {
+    api('/api/me/food').then(setFoodDay).catch(() => {});
+    Session.getBaseUrl().then(setBaseUrl);
+  }, [user]);
 
   async function checkIn() {
     try {
@@ -122,84 +156,69 @@ function TabShell({ onLogout }) {
     catch {}
   }
 
-  if (!user) {
-    return (
-      <View style={styles.splash}>
-        {error ? (
-          <>
-            <Ionicons name="cloud-offline" size={40} color={colors.outline} />
-            <Text style={styles.errorTitle}>Couldn't reach the server</Text>
-            <Text style={styles.errorBody}>{error}</Text>
-            <Text style={styles.errorHint}>
-              Make sure the backend is running (`npm start` in the project root) and your phone is on the same Wi-Fi.
-            </Text>
-          </>
-        ) : (
-          <ActivityIndicator color={colors.primary} size="large" />
-        )}
-      </View>
-    );
-  }
-
   const unread = (user.notifications || []).filter(n => !n.read).length;
 
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.outlineVar,
-          height: 64,
-          paddingBottom: 10,
-          paddingTop: 6,
-        },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.onSurfaceVar,
-      }}
-    >
-      <Tab.Screen
-        name="Home"
-        options={{ tabBarIcon: ({ color }) => <Ionicons name="home" size={22} color={color} /> }}
-      >
+    <Tab.Navigator screenOptions={tabOptions}>
+      <Tab.Screen name="Home" options={{ tabBarIcon: ({ color }) => <Ionicons name="home" size={22} color={color} /> }}>
         {({ navigation }) => <HomeTab navigation={navigation} user={user} foodDay={foodDay} checkIn={checkIn} refresh={refresh} refreshing={refreshing} />}
       </Tab.Screen>
-
-      <Tab.Screen
-        name="Workout"
-        options={{ tabBarIcon: ({ color }) => <Ionicons name="barbell" size={22} color={color} /> }}
-      >
+      <Tab.Screen name="Workout" options={{ tabBarIcon: ({ color }) => <Ionicons name="barbell" size={22} color={color} /> }}>
         {() => <WorkoutScreen user={user} />}
       </Tab.Screen>
-
-      <Tab.Screen
-        name="Food"
-        options={{ tabBarIcon: ({ color }) => <Ionicons name="restaurant" size={22} color={color} /> }}
-      >
+      <Tab.Screen name="Food" options={{ tabBarIcon: ({ color }) => <Ionicons name="restaurant" size={22} color={color} /> }}>
         {() => <FoodScreen day={foodDay} onRefresh={refresh} />}
       </Tab.Screen>
-
       <Tab.Screen
         name="Alerts"
-        options={{
-          tabBarIcon: ({ color }) => <Ionicons name="notifications" size={22} color={color} />,
-          tabBarBadge: unread > 0 ? unread : undefined,
-        }}
+        options={{ tabBarIcon: ({ color }) => <Ionicons name="notifications" size={22} color={color} />, tabBarBadge: unread > 0 ? unread : undefined }}
         listeners={{ tabPress: () => { if (unread > 0) markAllRead(); } }}
       >
         {() => <NotificationsScreen notifications={user.notifications || []} />}
       </Tab.Screen>
-
-      <Tab.Screen
-        name="Account"
-        options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}
-      >
+      <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
         {() => <AccountScreen user={user} onSaved={refresh} onLogout={onLogout} baseUrl={baseUrl} />}
       </Tab.Screen>
     </Tab.Navigator>
   );
 }
+
+function TrainerTabs({ user, onLogout }) {
+  return (
+    <Tab.Navigator screenOptions={tabOptions}>
+      <Tab.Screen name="Clients" component={TrainerClientsScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} /> }} />
+      <Tab.Screen name="Earnings" component={TrainerEarningsScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="cash" size={22} color={color} /> }} />
+      <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
+        {() => <SimpleAccountScreen user={user} onLogout={onLogout} />}
+      </Tab.Screen>
+    </Tab.Navigator>
+  );
+}
+
+function AdminTabs({ user, onLogout }) {
+  return (
+    <Tab.Navigator screenOptions={tabOptions}>
+      <Tab.Screen name="Members" component={AdminMembersScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} /> }} />
+      <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
+        {() => <SimpleAccountScreen user={user} onLogout={onLogout} />}
+      </Tab.Screen>
+    </Tab.Navigator>
+  );
+}
+
+const tabOptions = {
+  headerShown: false,
+  tabBarStyle: {
+    backgroundColor: colors.surface,
+    borderTopColor: colors.outlineVar,
+    height: 64,
+    paddingBottom: 10,
+    paddingTop: 6,
+  },
+  tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+  tabBarActiveTintColor: colors.primary,
+  tabBarInactiveTintColor: colors.onSurfaceVar,
+};
 
 // Refetches /api/me whenever the Home tab regains focus — this is what
 // makes attendance show up immediately after returning from the QR-scan

@@ -3967,6 +3967,52 @@ app.get('/api/admin/reports/monthly-summary', auth, requirePermission('reports.v
 
 // ============================== Trainer Portal ==============================
 
+// A trainer's own earnings/commission — same numbers admin sees on the
+// Trainers page, just self-scoped (no trainers.manage permission needed) so
+// a trainer can check their own commission without asking admin.
+app.get('/api/trainer/stats', auth, requireTrainer, wrap(async (req, res) => {
+  const tid = effectiveTrainerId(req);
+  const today      = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+  const yearStart  = new Date(today.getFullYear(), 0, 1).toISOString().slice(0, 10);
+
+  const [trainer, assigned, activeClients, admMTD, ptMTD, ptYTD] = await Promise.all([
+    q1(`SELECT id, name, trainer_monthly_target::float AS monthly_target,
+               trainer_specialization AS specialization, trainer_is_partner AS is_partner
+        FROM users WHERE id = $1 AND role = 'trainer'`, [tid]),
+    q1(`SELECT COUNT(*)::int AS n FROM users WHERE assigned_trainer_id = $1`, [tid]),
+    q1(`SELECT COUNT(*)::int AS n FROM pt_assignments WHERE trainer_id = $1 AND status = 'active'`, [tid]),
+    q1(`SELECT COUNT(*)::int AS n, COALESCE(SUM(paid_amount),0)::float AS revenue
+        FROM admissions WHERE trainer_id = $1 AND admission_date >= $2`, [tid, monthStart]),
+    q1(`SELECT COUNT(*)::int AS n, COALESCE(SUM(price_paid),0)::float AS revenue
+        FROM pt_assignments WHERE trainer_id = $1 AND start_date >= $2 AND status <> 'cancelled'`, [tid, monthStart]),
+    q1(`SELECT COUNT(*)::int AS n, COALESCE(SUM(price_paid),0)::float AS revenue
+        FROM pt_assignments WHERE trainer_id = $1 AND start_date >= $2 AND status <> 'cancelled'`, [tid, yearStart]),
+  ]);
+
+  if (!trainer) return res.status(404).json({ error: 'Trainer not found' });
+
+  const { ptRate, membershipRate } = commissionRates({ isPartner: trainer.is_partner, activeClients: activeClients.n });
+  const mtdRevenue = (admMTD.revenue || 0) + (ptMTD.revenue || 0);
+  const commission = Math.round(((admMTD.revenue || 0) * membershipRate / 100 + (ptMTD.revenue || 0) * ptRate / 100) * 100) / 100;
+  const progress   = trainer.monthly_target
+    ? Math.round((mtdRevenue / trainer.monthly_target) * 100)
+    : null;
+
+  res.json({
+    trainer,
+    membersAssigned: assigned.n,
+    activeClients: activeClients.n,
+    ptRate, membershipRate,
+    mtd: {
+      admissions: admMTD.n, admissionRevenue: admMTD.revenue || 0,
+      ptSessions: ptMTD.n,  ptRevenue:        ptMTD.revenue  || 0,
+      totalRevenue: mtdRevenue, commissionEarned: commission, targetProgress: progress,
+    },
+    ytd: { ptSessions: ptYTD.n, ptRevenue: ptYTD.revenue || 0 },
+  });
+}));
+
 // My clients — members with an active PT assignment under this trainer
 app.get('/api/trainer/clients', auth, requireTrainer, wrap(async (req, res) => {
   const trainerId = effectiveTrainerId(req);

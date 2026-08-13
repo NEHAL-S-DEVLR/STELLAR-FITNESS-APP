@@ -50,6 +50,7 @@
     select.addEventListener('change', async () => {
       viewingTrainerId = select.value ? parseInt(select.value, 10) : null;
       hoursLoaded = false;
+      earningsLoaded = false;
       await loadClients();
       if (document.querySelector('[data-ttab="hours"]').classList.contains('active')) {
         hoursLoaded = true;
@@ -77,6 +78,29 @@
       t.classList.add('active');
       document.getElementById('tpanel-' + t.dataset.ttab).classList.add('active');
     });
+  });
+
+  // ---- Earnings tab
+  const money = v => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  let earningsLoaded = false;
+
+  async function loadEarnings() {
+    const s = await api(withTrainerParam('/api/trainer/stats'));
+    document.getElementById('earn-mtd-revenue').textContent = money(s.mtd.totalRevenue);
+    document.getElementById('earn-mtd-sub').textContent = `${s.mtd.admissions} admission${s.mtd.admissions === 1 ? '' : 's'} + ${s.mtd.ptSessions} PT this month`;
+    document.getElementById('earn-commission').textContent = money(s.mtd.commissionEarned);
+    document.getElementById('earn-rate').textContent = s.trainer.is_partner
+      ? 'Partner · 100% of PT'
+      : `${s.ptRate}% PT · ${s.membershipRate}% membership`;
+    document.getElementById('earn-active-clients').textContent = s.activeClients;
+    document.getElementById('earn-adm-revenue').textContent = money(s.mtd.admissionRevenue);
+    document.getElementById('earn-pt-revenue').textContent = money(s.mtd.ptRevenue);
+    document.getElementById('earn-pt-ytd').textContent = money(s.ytd.ptRevenue);
+    document.getElementById('earn-target').textContent = s.mtd.targetProgress != null ? `${s.mtd.targetProgress}%` : 'No target set';
+  }
+
+  document.querySelector('[data-ttab="earnings"]').addEventListener('click', () => {
+    if (!earningsLoaded) { earningsLoaded = true; loadEarnings().catch(() => {}); }
   });
 
   // ---- Working Hours tab

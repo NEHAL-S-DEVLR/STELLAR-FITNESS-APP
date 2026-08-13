@@ -35,7 +35,40 @@
 
     <div class="tabs">
       <div class="tab active" data-ttab="clients"><span class="material-symbols-rounded">group</span>Clients</div>
+      <div class="tab" data-ttab="earnings"><span class="material-symbols-rounded">payments</span>Earnings</div>
       <div class="tab" data-ttab="hours"><span class="material-symbols-rounded">schedule</span>Working Hours</div>
+    </div>
+
+    <!-- ===== EARNINGS TAB ===== -->
+    <div class="tab-panel" id="tpanel-earnings">
+      <div class="grid cols-3" style="margin-bottom: 24px;">
+        <div class="stat tinted">
+          <div class="lbl">This Month's Revenue</div>
+          <div class="num" id="earn-mtd-revenue">—</div>
+          <div class="sub" id="earn-mtd-sub">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">My Commission This Month</div>
+          <div class="num" id="earn-commission">—</div>
+          <div class="sub" id="earn-rate">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Active Clients</div>
+          <div class="num" id="earn-active-clients">—</div>
+          <div class="sub">10+ unlocks the higher rate</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2><span class="material-symbols-rounded">bar_chart</span>Breakdown</h2></div>
+        <table>
+          <tbody>
+            <tr><td>Admissions revenue (MTD)</td><td class="right" id="earn-adm-revenue">—</td></tr>
+            <tr><td>PT revenue (MTD)</td><td class="right" id="earn-pt-revenue">—</td></tr>
+            <tr><td>PT revenue (year to date)</td><td class="right" id="earn-pt-ytd">—</td></tr>
+            <tr><td>Monthly target progress</td><td class="right" id="earn-target">—</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ===== CLIENTS TAB ===== -->
