@@ -1,21 +1,23 @@
-// Colors + spacing scale that mirror the web app's Material 3 dark palette.
+// Colors + spacing scale — matches the real Stellar Fitness Club brand used
+// on the website and admin dashboard (styles.css: pure black surfaces,
+// blue-500 accent), not a generic starter palette.
 export const colors = {
-  bg:         '#191113',
-  surface:    '#221A1B',
-  surfaceVar: '#261E1F',
-  surfaceHi:  '#312829',
-  primary:    '#FFB59A',
-  primaryContainer:   '#7C2E10',
-  onPrimary:  '#5B1B00',
-  onPrimaryContainer: '#FFDBCA',
-  onSurface:  '#F1DFDD',
-  onSurfaceVar: '#D8C2BE',
-  outline:    '#A18C89',
-  outlineVar: '#524341',
-  error:      '#FFB4AB',
-  success:    '#7CDBA5',
-  warning:    '#FFCC7A',
-  info:       '#A8C8FF',
+  bg:         '#000000',
+  surface:    '#09090B',
+  surfaceVar: '#18181B',
+  surfaceHi:  '#27272A',
+  primary:    '#3B82F6',
+  primaryContainer:   '#1D4ED8',
+  onPrimary:  '#FFFFFF',
+  onPrimaryContainer: '#DBEAFE',
+  onSurface:  '#F4F4F5',
+  onSurfaceVar: '#A1A1AA',
+  outline:    '#71717A',
+  outlineVar: '#3F3F46',
+  error:      '#F87171',
+  success:    '#34D399',
+  warning:    '#FBBF24',
+  info:       '#60A5FA',
 };
 
 export const radius = { xs: 8, sm: 12, md: 16, lg: 20, xl: 28, full: 999 };

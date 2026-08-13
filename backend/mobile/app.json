@@ -5,14 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#191113",
+    "backgroundColor": "#000000",
     "newArchEnabled": true,
     "platforms": [
       "ios",
       "android"
     ],
     "splash": {
-      "backgroundColor": "#191113",
+      "backgroundColor": "#000000",
       "resizeMode": "contain"
     },
     "ios": {
@@ -28,7 +28,7 @@
     "android": {
       "package": "com.stellarfitnessclub.app",
       "adaptiveIcon": {
-        "backgroundColor": "#7C2E10"
+        "backgroundColor": "#1D4ED8"
       },
       "usesCleartextTraffic": true,
       "permissions": [
