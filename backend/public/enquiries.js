@@ -18,7 +18,7 @@
   `;
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
-  const SOURCE_LABEL = { 'book-visit': 'Book Visit', 'contact': 'Contact' };
+  const SOURCE_LABEL = { 'book-visit': 'Enquiry', 'contact': 'Contact' };
   const STATUS_CHIP = {
     new:       'info',
     contacted: 'warning',

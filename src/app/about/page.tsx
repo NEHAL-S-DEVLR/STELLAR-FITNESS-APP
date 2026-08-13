@@ -123,7 +123,7 @@ export default function AboutPage() {
           </h2>
           <div className="mt-8">
             <Link
-              href="/book-visit"
+              href="/enquiry"
               className="inline-block rounded-full bg-blue-600 px-9 py-3.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-500"
             >
               Book a Free Visit

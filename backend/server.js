@@ -1425,7 +1425,33 @@ const publicSiteCors = cors({
 });
 
 app.use(express.json({ limit: '4mb' }));
+// Backend's own pages (admin/login/trainer-portal/etc.) always win on a name
+// collision, since this is registered first.
 app.use(express.static(path.join(__dirname, 'public')));
+
+// The public marketing site (Next.js, built via `npm run build` at the repo
+// root with output: "export") gets served from the SAME origin/process as
+// the API and the admin pages above — one deployable unit, no second
+// project, no cross-origin rewrites to keep in sync. `next build` writes
+// flat files like `about.html` for the `/about` route; `extensions: ['html']`
+// is what lets a request for `/about` resolve to that file.
+const MARKETING_SITE_DIR = path.join(__dirname, '..', 'out');
+if (fs.existsSync(MARKETING_SITE_DIR)) {
+  // `next export` writes each route as both a flat `<route>.html` file (e.g.
+  // about.html for /about) *and* a same-named directory holding non-page RSC
+  // payload data with no index.html inside. express.static's directory-then-
+  // index resolution finds that directory first and redirects/404s before
+  // ever trying the .html file, so extension-less paths are resolved by hand
+  // here first; express.static below just handles /_next/*, favicon, etc.
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    if (path.extname(req.path)) return next();
+    const candidate = path.join(MARKETING_SITE_DIR, req.path === '/' ? 'index.html' : `${req.path}.html`);
+    if (fs.existsSync(candidate)) return res.sendFile(candidate);
+    next();
+  });
+  app.use(express.static(MARKETING_SITE_DIR));
+}
 
 // ---- Lazy init (runs once, shared across serverless invocations) ----
 let initPromise = null;
@@ -1929,20 +1955,13 @@ async function sendWhatsAppReminder({ phone, memberName, plan, daysLeft, expiryD
 }
 
 // -------- Auth --------
+// Public self-signup is intentionally disabled — accounts (member, trainer,
+// staff) are only ever created by admin, who then sends login credentials
+// over WhatsApp. This route is kept (rather than deleted) so old clients get
+// a clear error instead of a broken 404, and so the behaviour is visible and
+// easy to find instead of silently vanishing.
 app.post('/api/auth/signup', wrap(async (req, res) => {
-  const { name, email, password } = req.body || {};
-  if (!name || !email || !password) return res.status(400).json({ error: 'Name, email and password are required' });
-  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
-  const existing = await q1('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
-  if (existing) return res.status(409).json({ error: 'An account with that email already exists' });
-  const hash = bcrypt.hashSync(password, 10);
-  const row = await q1(`
-    INSERT INTO users (name, email, password_hash, role, joined)
-    VALUES ($1,$2,$3,'member',$4)
-    RETURNING *
-  `, [name.trim(), email.trim().toLowerCase(), hash, todayISO()]);
-  const user = toUser(row);
-  res.json({ user, token: issueToken(user) });
+  res.status(403).json({ error: 'Accounts are created by the gym — visit the front desk or contact admin to get set up.' });
 }));
 
 app.post('/api/auth/login', wrap(async (req, res) => {

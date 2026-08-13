@@ -29,7 +29,7 @@ export const FOOTER_NAV = {
   Support: [
     { href: "/faq", label: "FAQ" },
     { href: "/contact", label: "Contact" },
-    { href: "/book-visit", label: "Book a Visit" },
+    { href: "/enquiry", label: "Enquiry" },
   ],
   Legal: [
     { href: "/privacy-policy", label: "Privacy Policy" },

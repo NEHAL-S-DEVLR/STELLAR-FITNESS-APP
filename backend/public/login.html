@@ -19,11 +19,6 @@
       </div>
       <p class="sub">Track workouts, nutrition, and progress — together.</p>
 
-      <div class="auth-toggle">
-        <button id="tab-login"  class="active">Sign in</button>
-        <button id="tab-signup">Create account</button>
-      </div>
-
       <div class="error-banner" id="error"></div>
 
       <!-- Login -->
@@ -41,24 +36,9 @@
         </button>
       </form>
 
-      <!-- Sign up -->
-      <form id="form-signup" style="display: none;">
-        <div class="field">
-          <label for="su-name">Full name</label>
-          <input type="text" id="su-name" required />
-        </div>
-        <div class="field">
-          <label for="su-email">Email</label>
-          <input type="email" id="su-email" autocomplete="email" required />
-        </div>
-        <div class="field">
-          <label for="su-pw">Password <span class="muted" style="font-weight: 400;">(at least 6 characters)</span></label>
-          <input type="password" id="su-pw" autocomplete="new-password" minlength="6" required />
-        </div>
-        <button type="submit" class="btn btn-filled lg" style="width: 100%;">
-          <span class="material-symbols-rounded">person_add</span> Create account
-        </button>
-      </form>
+      <p class="sub" style="margin-top: 18px; text-align: center;">
+        New here? Visit the front desk to get set up — your login is sent to you on WhatsApp.
+      </p>
 
     </div>
   </div>
@@ -68,22 +48,6 @@
     const err = document.getElementById('error');
     const showError = msg => { err.textContent = msg; err.classList.add('show'); };
     const clearError = () => err.classList.remove('show');
-
-    // Tab switching
-    document.getElementById('tab-login').addEventListener('click', () => {
-      document.getElementById('tab-login').classList.add('active');
-      document.getElementById('tab-signup').classList.remove('active');
-      document.getElementById('form-login').style.display = '';
-      document.getElementById('form-signup').style.display = 'none';
-      clearError();
-    });
-    document.getElementById('tab-signup').addEventListener('click', () => {
-      document.getElementById('tab-signup').classList.add('active');
-      document.getElementById('tab-login').classList.remove('active');
-      document.getElementById('form-signup').style.display = '';
-      document.getElementById('form-login').style.display = 'none';
-      clearError();
-    });
 
     function goHome(user) {
       const next = new URLSearchParams(location.search).get('next');
@@ -108,23 +72,6 @@
         goHome(user);
       } catch (e) { showError(e.message); }
     });
-
-    document.getElementById('form-signup').addEventListener('submit', async e => {
-      e.preventDefault(); clearError();
-      try {
-        const { user, token } = await api('/api/auth/signup', {
-          method: 'POST',
-          body: {
-            name: document.getElementById('su-name').value.trim(),
-            email: document.getElementById('su-email').value.trim(),
-            password: document.getElementById('su-pw').value,
-          },
-        });
-        Auth.token = token;
-        goHome(user);
-      } catch (e) { showError(e.message); }
-    });
-
 
     // Auto-redirect if already signed in
     if (Auth.token) {

@@ -65,10 +65,10 @@ export default function Header() {
             Login
           </a>
           <Link
-            href="/book-visit"
+            href="/enquiry"
             className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-500"
           >
-            Book a Visit
+            Enquiry
           </Link>
         </div>
 
@@ -121,11 +121,11 @@ export default function Header() {
             Login
           </a>
           <Link
-            href="/book-visit"
+            href="/enquiry"
             onClick={() => setOpen(false)}
             className="mt-2 rounded-full bg-blue-600 px-5 py-2.5 text-center text-sm font-bold uppercase tracking-wide text-white"
           >
-            Book a Visit
+            Enquiry
           </Link>
         </nav>
       )}

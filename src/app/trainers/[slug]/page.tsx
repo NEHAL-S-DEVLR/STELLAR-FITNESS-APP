@@ -155,7 +155,7 @@ export default async function TrainerProfilePage({
 
             <Reveal direction="left" delay={0.4}>
               <Link
-                href="/book-visit"
+                href="/enquiry"
                 className="block rounded-full bg-blue-600 px-6 py-3 text-center text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-500"
               >
                 Book a Session

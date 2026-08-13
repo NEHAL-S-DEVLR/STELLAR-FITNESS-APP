@@ -129,7 +129,7 @@ export default function MembershipPage() {
             </ul>
 
             <Link
-              href="/book-visit"
+              href="/enquiry"
               className={`mt-8 rounded-full px-5 py-3 text-center text-sm font-bold uppercase tracking-wide transition-colors ${
                 plan.highlighted
                   ? "bg-blue-600 text-white hover:bg-blue-500"

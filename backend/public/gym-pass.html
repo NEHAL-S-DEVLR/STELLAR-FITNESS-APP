@@ -15,30 +15,75 @@
       #pass-card { position: absolute; top: 0; left: 0; }
       .no-print { display: none !important; }
     }
+
+    /* ---- The card itself: landscape, ID-card proportions ---- */
     #pass-card {
-      width: 380px; max-width: 92vw; border-radius: 20px; overflow: hidden;
-      background: linear-gradient(145deg, #14161a, #1f2227);
-      color: #fff; margin: 0 auto; box-shadow: 0 20px 50px rgba(0,0,0,.35);
+      width: 420px; max-width: 92vw; aspect-ratio: 1.586 / 1;
+      border-radius: 18px; overflow: hidden; position: relative;
+      background: linear-gradient(135deg, #14161a 0%, #1c2028 55%, #202538 100%);
+      color: #fff; margin: 0 auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,.4);
       border: 1px solid rgba(255,255,255,.08);
+      display: flex; flex-direction: column;
     }
-    #pass-card .head { padding: 20px 22px 14px; display:flex; align-items:center; gap:12px; }
-    #pass-card .head .logo { width:38px; height:38px; border-radius:10px; background:var(--md-primary); display:flex; align-items:center; justify-content:center; font-weight:700; color:#111; }
-    #pass-card .head .name { font-family:'Bebas Neue', sans-serif; letter-spacing:1px; font-size:20px; }
-    #pass-card .body-row { display:flex; gap:16px; padding: 6px 22px 18px; align-items:center; }
-    #pass-card .photo { width:76px; height:76px; border-radius:14px; object-fit:cover; background:#333; flex-shrink:0; }
-    #pass-card .meta { flex:1; min-width:0; }
-    #pass-card .meta .mname { font-size:18px; font-weight:600; margin-bottom:2px; }
-    #pass-card .meta .mid { font-family: 'JetBrains Mono', monospace; font-size:12px; color:#aaa; margin-bottom:8px; }
-    #pass-card .status { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-    #pass-card .status.active { background:rgba(60,200,120,.18); color:#5be08e; }
-    #pass-card .status.expired { background:rgba(230,80,80,.18); color:#ff8080; }
-    #pass-card .status.inactive { background:rgba(150,150,150,.18); color:#bbb; }
-    #pass-card .divider { height:1px; background:rgba(255,255,255,.08); margin: 0 22px; }
-    #pass-card .details { padding: 16px 22px; display:grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; font-size: 12px; }
-    #pass-card .details .lbl { color:#8a8f99; text-transform:uppercase; letter-spacing:.5px; font-size:10px; margin-bottom:2px; }
-    #pass-card .details .val { font-weight:500; }
-    #pass-card .qr-wrap { display:flex; justify-content:center; padding: 8px 22px 24px; }
-    #pass-card .qr-wrap img { width:120px; height:120px; border-radius:10px; background:#fff; padding:8px; }
+    /* Subtle accent watermark stripe, like a real card's security pattern */
+    #pass-card::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 106% -10%, rgba(255,255,255,.10), transparent 45%),
+        repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 2px, transparent 2px 14px);
+      pointer-events: none;
+    }
+    #pass-card .head {
+      position: relative; z-index: 1;
+      padding: 14px 18px 0; display: flex; align-items: center; justify-content: space-between;
+    }
+    #pass-card .head .brand { display: flex; align-items: center; gap: 9px; }
+    #pass-card .head .logo {
+      width: 26px; height: 26px; border-radius: 7px; background: var(--md-primary);
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; color: #111;
+    }
+    #pass-card .head .club { font-family: 'Bebas Neue', sans-serif; letter-spacing: 1.2px; font-size: 15px; }
+    #pass-card .head .tag { font-size: 9px; color: #8a8f99; text-transform: uppercase; letter-spacing: 1px; }
+
+    #pass-card .main {
+      position: relative; z-index: 1; flex: 1;
+      display: flex; align-items: center; gap: 16px;
+      padding: 10px 18px 12px;
+    }
+    #pass-card .photo {
+      width: 92px; height: 116px; flex-shrink: 0;
+      border-radius: 12px; object-fit: cover; background: #333;
+      border: 2px solid rgba(255,255,255,.15);
+    }
+    #pass-card .info { flex: 1; min-width: 0; }
+    #pass-card .info .mname { font-size: 20px; font-weight: 700; line-height: 1.15; margin-bottom: 3px; }
+    #pass-card .info .mid { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #9aa0ad; margin-bottom: 8px; }
+    #pass-card .status {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
+    }
+    #pass-card .status.active { background: rgba(60,200,120,.18); color: #5be08e; }
+    #pass-card .status.expired { background: rgba(230,80,80,.18); color: #ff8080; }
+    #pass-card .status.inactive { background: rgba(150,150,150,.18); color: #bbb; }
+    #pass-card .info .row { display: flex; gap: 14px; font-size: 11px; }
+    #pass-card .info .row .lbl { color: #7d828f; text-transform: uppercase; letter-spacing: .4px; font-size: 9px; margin-bottom: 1px; }
+    #pass-card .info .row .val { font-weight: 600; }
+
+    #pass-card .qr-corner {
+      position: absolute; right: 14px; bottom: 12px; z-index: 1;
+      width: 48px; height: 48px; border-radius: 8px; background: #fff; padding: 4px;
+    }
+    #pass-card .qr-corner img { width: 100%; height: 100%; display: block; }
+
+    /* ---- Details panel below the card, not part of the card itself ---- */
+    .pass-details {
+      width: 420px; max-width: 92vw; margin: 18px auto 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px;
+    }
+    .pass-details .item { }
+    .pass-details .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--md-on-surface-variant); margin-bottom: 2px; }
+    .pass-details .val { font-size: 13px; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -50,31 +95,32 @@
 
       <div id="pass-card">
         <div class="head">
-          <div class="logo">SF</div>
-          <div>
-            <div class="name">STELLAR FITNESS CLUB</div>
-            <div style="font-size:11px; color:#aaa;">Digital Membership Pass</div>
+          <div class="brand">
+            <div class="logo">SF</div>
+            <div class="club">STELLAR FITNESS CLUB</div>
           </div>
+          <div class="tag">Member Pass</div>
         </div>
-        <div class="divider"></div>
-        <div class="body-row">
+        <div class="main">
           <img class="photo" id="pp-photo" src="" alt="" />
-          <div class="meta">
+          <div class="info">
             <div class="mname" id="pp-name">—</div>
             <div class="mid" id="pp-id">—</div>
-            <span class="status" id="pp-status">—</span>
+            <div><span class="status" id="pp-status">—</span></div>
+            <div class="row">
+              <div><div class="lbl">Plan</div><div class="val" id="pp-plan">—</div></div>
+              <div><div class="lbl">Valid Until</div><div class="val" id="pp-expiry">—</div></div>
+            </div>
           </div>
         </div>
-        <div class="divider"></div>
-        <div class="details">
-          <div><div class="lbl">Plan</div><div class="val" id="pp-plan">—</div></div>
-          <div><div class="lbl">Valid Until</div><div class="val" id="pp-expiry">—</div></div>
-          <div><div class="lbl">Batch</div><div class="val" id="pp-batch">—</div></div>
-          <div><div class="lbl">Trainer</div><div class="val" id="pp-trainer">—</div></div>
-          <div><div class="lbl">Member Since</div><div class="val" id="pp-since">—</div></div>
-          <div><div class="lbl">Type</div><div class="val" id="pp-type">—</div></div>
-        </div>
-        <div class="qr-wrap"><img id="pp-qr" src="" alt="Verification QR" /></div>
+        <div class="qr-corner"><img id="pp-qr" src="" alt="Verification QR" /></div>
+      </div>
+
+      <div class="pass-details">
+        <div class="item"><div class="lbl">Batch</div><div class="val" id="pp-batch">—</div></div>
+        <div class="item"><div class="lbl">Trainer</div><div class="val" id="pp-trainer">—</div></div>
+        <div class="item"><div class="lbl">Member Since</div><div class="val" id="pp-since">—</div></div>
+        <div class="item"><div class="lbl">Type</div><div class="val" id="pp-type">—</div></div>
       </div>
 
       <div class="flex gap no-print" style="max-width:420px; margin:18px auto 0; justify-content:center;">
@@ -97,7 +143,7 @@
       try {
         const path = memberId ? `/api/admin/members/${memberId}/gym-pass` : '/api/me/gym-pass';
         const p = await api(path);
-        document.getElementById('pp-photo').src = p.photoUrl || 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="76" height="76"><rect width="100%" height="100%" fill="#333"/></svg>`);
+        document.getElementById('pp-photo').src = p.photoUrl || 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="92" height="116"><rect width="100%" height="100%" fill="#333"/><text x="50%" y="53%" font-size="34" fill="#666" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif">?</text></svg>`);
         document.getElementById('pp-name').textContent = p.name;
         document.getElementById('pp-id').textContent = p.memberId;
         const statusEl = document.getElementById('pp-status');

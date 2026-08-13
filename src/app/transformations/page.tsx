@@ -78,7 +78,7 @@ export default function TransformationsPage() {
         </h2>
         <div className="mt-6">
           <Link
-            href="/book-visit"
+            href="/enquiry"
             className="inline-block rounded-full bg-blue-600 px-8 py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-500"
           >
             Start Your Journey

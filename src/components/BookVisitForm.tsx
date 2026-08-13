@@ -63,8 +63,8 @@ export default function BookVisitForm() {
   if (submitted) {
     return (
       <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 p-6 text-blue-300">
-        Your visit request is in! A member of our team will confirm your
-        time slot within one business day.
+        Your enquiry is in! A member of our team will reach out within one
+        business day.
       </div>
     );
   }
@@ -225,7 +225,7 @@ export default function BookVisitForm() {
         disabled={submitting}
         className="rounded-full bg-blue-600 px-7 py-3 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? "Sending…" : "Request Visit"}
+        {submitting ? "Sending…" : "Submit Enquiry"}
       </button>
     </form>
   );
