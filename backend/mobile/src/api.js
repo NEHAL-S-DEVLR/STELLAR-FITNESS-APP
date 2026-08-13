@@ -7,6 +7,10 @@ const BASE_KEY  = 'fitcore.baseUrl';
 // When you launch Expo Go, the phone reaches your laptop over LAN. Metro exposes
 // the laptop's host via Constants.expoConfig.hostUri (e.g. "192.168.0.184:8081").
 // We reuse that IP with the backend port so setup is zero-config for most people.
+// hostUri is only populated under Expo Go / a dev client — a standalone release
+// build (the APK real users install) has none of that, so it falls through to
+// the real production URL instead of a localhost address that means nothing on
+// their phone.
 export function defaultBaseUrl() {
   const hostUri = Constants.expoConfig?.hostUri
     || Constants.manifest2?.extra?.expoClient?.hostUri
@@ -14,7 +18,7 @@ export function defaultBaseUrl() {
     || Constants.manifest?.hostUri;
   const host = hostUri ? hostUri.split(':')[0] : null;
   if (host) return `http://${host}:3000`;
-  return 'http://localhost:3000';
+  return 'https://stellar-fitness-app.vercel.app';
 }
 
 // ----- Persisted session -----
