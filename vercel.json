@@ -1,13 +1,37 @@
 {
-  "buildCommand": "npm install && npm run build && cd backend && npm install",
   "functions": {
-    "server.js": {
+    "api/index.js": {
       "maxDuration": 15,
-      "memory": 512,
-      "includeFiles": "out/**"
+      "memory": 512
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/server.js" }
+    { "source": "/login.html", "destination": "/api" },
+    { "source": "/admin.html", "destination": "/api" },
+    { "source": "/admin.js", "destination": "/api" },
+    { "source": "/admin-nav.js", "destination": "/api" },
+    { "source": "/admissions.html", "destination": "/api" },
+    { "source": "/admissions.js", "destination": "/api" },
+    { "source": "/api.js", "destination": "/api" },
+    { "source": "/checkin.html", "destination": "/api" },
+    { "source": "/enquiries.html", "destination": "/api" },
+    { "source": "/enquiries.js", "destination": "/api" },
+    { "source": "/expenses.html", "destination": "/api" },
+    { "source": "/expenses.js", "destination": "/api" },
+    { "source": "/library.js", "destination": "/api" },
+    { "source": "/gym-pass.html", "destination": "/api" },
+    { "source": "/member-verify.html", "destination": "/api" },
+    { "source": "/manual.html", "destination": "/api" },
+    { "source": "/profile.html", "destination": "/api" },
+    { "source": "/profile.js", "destination": "/api" },
+    { "source": "/reports.html", "destination": "/api" },
+    { "source": "/reports.js", "destination": "/api" },
+    { "source": "/styles.css", "destination": "/api" },
+    { "source": "/trainer-portal.html", "destination": "/api" },
+    { "source": "/trainer-portal.js", "destination": "/api" },
+    { "source": "/trainers.html", "destination": "/api" },
+    { "source": "/trainers.js", "destination": "/api" },
+    { "source": "/uploads/:path*", "destination": "/api" },
+    { "source": "/api/:path*", "destination": "/api" }
   ]
 }
