@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Reports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* Print styles for report pages */
+    @media print {
+      .appbar, .admin-page-nav, .report-controls, .no-print { display: none !important; }
+      body { background: #fff !important; color: #111 !important; }
+      .container { padding: 0 !important; max-width: 100% !important; }
+      .card { box-shadow: none !important; border: 1px solid #ddd !important; page-break-inside: avoid; }
+      .stat { border: 1px solid #ddd !important; }
+      .report-section { page-break-inside: avoid; }
+      canvas { max-height: 240px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="flex between" style="margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 class="display">Reports</h1>
+        <div class="body">Financial and operational overview for any date range.</div>
+      </div>
+      <button class="btn btn-tonal no-print" id="print-btn">
+        <span class="material-symbols-rounded">print</span>Print Report
+      </button>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- Date range controls -->
+    <div class="card report-controls no-print" style="margin-bottom: 24px;">
+      <div class="flex gap center" style="flex-wrap: wrap; gap: 12px;">
+        <div class="flex gap center">
+          <label style="font-size: 13px; color: var(--md-on-surface-variant); white-space: nowrap;">From</label>
+          <input type="date" id="range-from" style="width: 160px;" />
+        </div>
+        <div class="flex gap center">
+          <label style="font-size: 13px; color: var(--md-on-surface-variant); white-space: nowrap;">To</label>
+          <input type="date" id="range-to" style="width: 160px;" />
+        </div>
+        <div class="flex gap" style="flex-wrap: wrap;">
+          <button class="btn btn-outlined sm" data-preset="today">Today</button>
+          <button class="btn btn-outlined sm" data-preset="week">This Week</button>
+          <button class="btn btn-outlined sm" data-preset="month">This Month</button>
+          <button class="btn btn-outlined sm" data-preset="lastmonth">Last Month</button>
+          <button class="btn btn-outlined sm" data-preset="year">This Year</button>
+        </div>
+        <button class="btn btn-filled sm" id="load-report-btn">
+          <span class="material-symbols-rounded">bar_chart</span>Generate
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading / error states -->
+    <div id="report-loading" style="display:none; padding: 60px 0; text-align: center; color: var(--md-on-surface-variant);">
+      <span class="material-symbols-rounded" style="font-size: 40px; opacity: 0.4; display: block; margin-bottom: 12px;">hourglass_empty</span>
+      Loading report data…
+    </div>
+
+    <!-- Report content (hidden until data loads) -->
+    <div id="report-content" style="display:none;">
+
+      <!-- Summary Row -->
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">analytics</span>Summary</h2>
+          <span class="body" id="report-range-label"></span>
+        </div>
+        <div class="summary-row" id="summary-row"></div>
+      </div>
+
+      <!-- Two-column: Revenue vs Expenses -->
+      <div class="grid cols-2" style="margin-bottom: 24px;">
+        <div class="stat tinted">
+          <div class="lbl">Total Revenue</div>
+          <div class="num" id="sum-revenue">—</div>
+          <div class="sub" id="sum-revenue-sub">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Total Expenses</div>
+          <div class="num" id="sum-expenses">—</div>
+          <div class="sub" id="sum-expenses-sub">—</div>
+        </div>
+      </div>
+
+      <!-- Admission Report -->
+      <div class="report-section card">
+        <h3><span class="material-symbols-rounded">assignment_add</span> Admission Report</h3>
+        <div class="grid cols-2 mt-18">
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">Revenue</th>
+                  <th style="text-align:right;">Discount</th>
+                  <th style="text-align:right;">Outstanding</th>
+                </tr>
+              </thead>
+              <tbody id="admission-tbody"></tbody>
+            </table>
+          </div>
+          <div>
+            <canvas id="admission-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Breakdown -->
+      <div class="report-section card">
+        <h3><span class="material-symbols-rounded">payments</span> Revenue Breakdown</h3>
+        <div class="grid cols-2 mt-18">
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Payment Method</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">Total</th>
+                </tr>
+              </thead>
+              <tbody id="revenue-tbody"></tbody>
+            </table>
+          </div>
+          <div>
+            <canvas id="revenue-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expense Breakdown -->
+      <div class="report-section card">
+        <h3><span class="material-symbols-rounded">receipt_long</span> Expense Breakdown</h3>
+        <div class="grid cols-2 mt-18">
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">Total</th>
+                </tr>
+              </thead>
+              <tbody id="expense-tbody"></tbody>
+            </table>
+          </div>
+          <div>
+            <canvas id="expense-chart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trainer Performance -->
+      <div class="report-section card">
+        <h3><span class="material-symbols-rounded">sports</span> Trainer Performance</h3>
+        <div class="mt-18" id="trainer-content">
+          <table>
+            <thead>
+              <tr>
+                <th>Trainer</th>
+                <th style="text-align:right;">Admissions</th>
+                <th style="text-align:right;">Revenue</th>
+                <th style="text-align:right;">Commission Rate</th>
+                <th style="text-align:right;">Commission Earned</th>
+              </tr>
+            </thead>
+            <tbody id="trainer-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PT Summary -->
+      <div class="report-section card">
+        <h3><span class="material-symbols-rounded">fitness_center</span> PT Summary</h3>
+        <div class="grid cols-4 mt-18" id="pt-stats">
+          <div class="stat">
+            <div class="lbl">PT Assignments</div>
+            <div class="num" id="pt-sessions">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">PT Revenue</div>
+            <div class="num" id="pt-revenue">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Avg per Assignment</div>
+            <div class="num" id="pt-avg">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Active PT Members</div>
+            <div class="num" id="pt-members">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attendance Summary -->
+      <div class="report-section card">
+        <h3><span class="material-symbols-rounded">today</span> Attendance Summary</h3>
+        <div class="grid cols-4 mt-18">
+          <div class="stat">
+            <div class="lbl">Total Check-ins</div>
+            <div class="num" id="att-total">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Unique Members</div>
+            <div class="num" id="att-unique">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Avg per Day</div>
+            <div class="num" id="att-avg">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Peak Day</div>
+            <div class="num" id="att-peak" style="font-size: 16px; margin-top: 4px;">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /report-content -->
+
+    <div id="report-empty" style="display:none;" class="empty mt-24">
+      <span class="material-symbols-rounded">bar_chart</span>
+      No data found for the selected date range. Try a different range.
+    </div>
+
+    <!-- Trends & Analytics — month-over-month, independent of the date-range filter above -->
+    <div class="report-section card mt-24">
+      <h3><span class="material-symbols-rounded">trending_up</span> Trends &amp; Analytics</h3>
+      <div class="body" style="margin-bottom:16px;">
+        How the gym is moving month to month — not just a single date range.
+      </div>
+      <div class="grid cols-2">
+        <div>
+          <h4 style="margin: 0 0 10px;">Revenue vs Expenses</h4>
+          <canvas id="trend-revenue-chart" height="220"></canvas>
+        </div>
+        <div>
+          <h4 style="margin: 0 0 10px;">Net Profit</h4>
+          <canvas id="trend-profit-chart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="grid cols-2 mt-18">
+        <div>
+          <h4 style="margin: 0 0 10px;">New Members Joined</h4>
+          <canvas id="trend-members-chart" height="220"></canvas>
+        </div>
+        <div>
+          <h4 style="margin: 0 0 10px;">Total Check-ins</h4>
+          <canvas id="trend-attendance-chart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Profit Split — independent of the date-range filter above -->
+    <div class="report-section card mt-24">
+      <h3><span class="material-symbols-rounded">handshake</span> Monthly Profit Split</h3>
+      <div class="body" style="margin-bottom:16px;">
+        Net profit (total revenue − total expenses) each month, split 50/50 between <span id="mp-company-name">the company</span> and <span id="mp-partner-name">the partner trainer</span>.
+      </div>
+      <div id="mp-current" class="grid cols-4" style="margin-bottom:20px;"></div>
+      <h4 style="margin: 20px 0 10px;">All Months</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th style="text-align:right;">Revenue</th>
+            <th style="text-align:right;">Expenses</th>
+            <th style="text-align:right;">Net Profit</th>
+            <th style="text-align:right;" id="mp-company-col">Company Share</th>
+            <th style="text-align:right;" id="mp-partner-col">Partner Share</th>
+          </tr>
+        </thead>
+        <tbody id="mp-tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script src="/reports.js"></script>
+</body>
+</html>

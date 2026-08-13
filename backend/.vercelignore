@@ -1,0 +1,8 @@
+node_modules
+.env
+.env.local
+*.log
+
+# Mobile / Android projects — not part of the webapp deployment
+mobile/
+android/

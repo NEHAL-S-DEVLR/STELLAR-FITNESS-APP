@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Sign in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <a href="/" class="back-home"><span class="material-symbols-rounded">arrow_back</span> Back to home</a>
+      <div class="brand">
+        <div class="logo">SF</div>
+        <div>Stellar Fitness Club</div>
+      </div>
+      <p class="sub">Track workouts, nutrition, and progress — together.</p>
+
+      <div class="auth-toggle">
+        <button id="tab-login"  class="active">Sign in</button>
+        <button id="tab-signup">Create account</button>
+      </div>
+
+      <div class="error-banner" id="error"></div>
+
+      <!-- Login -->
+      <form id="form-login">
+        <div class="field">
+          <label for="li-email">Email</label>
+          <input type="email" id="li-email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="li-pw">Password</label>
+          <input type="password" id="li-pw" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn btn-filled lg" style="width: 100%;">
+          <span class="material-symbols-rounded">login</span> Sign in
+        </button>
+      </form>
+
+      <!-- Sign up -->
+      <form id="form-signup" style="display: none;">
+        <div class="field">
+          <label for="su-name">Full name</label>
+          <input type="text" id="su-name" required />
+        </div>
+        <div class="field">
+          <label for="su-email">Email</label>
+          <input type="email" id="su-email" autocomplete="email" required />
+        </div>
+        <div class="field">
+          <label for="su-pw">Password <span class="muted" style="font-weight: 400;">(at least 6 characters)</span></label>
+          <input type="password" id="su-pw" autocomplete="new-password" minlength="6" required />
+        </div>
+        <button type="submit" class="btn btn-filled lg" style="width: 100%;">
+          <span class="material-symbols-rounded">person_add</span> Create account
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script>
+    const err = document.getElementById('error');
+    const showError = msg => { err.textContent = msg; err.classList.add('show'); };
+    const clearError = () => err.classList.remove('show');
+
+    // Tab switching
+    document.getElementById('tab-login').addEventListener('click', () => {
+      document.getElementById('tab-login').classList.add('active');
+      document.getElementById('tab-signup').classList.remove('active');
+      document.getElementById('form-login').style.display = '';
+      document.getElementById('form-signup').style.display = 'none';
+      clearError();
+    });
+    document.getElementById('tab-signup').addEventListener('click', () => {
+      document.getElementById('tab-signup').classList.add('active');
+      document.getElementById('tab-login').classList.remove('active');
+      document.getElementById('form-signup').style.display = '';
+      document.getElementById('form-login').style.display = 'none';
+      clearError();
+    });
+
+    function goHome(user) {
+      const next = new URLSearchParams(location.search).get('next');
+      if (next && next.startsWith('/')) { location.href = next; return; }
+      if (user.role === 'admin') location.href = '/admin.html';
+      else if (user.role === 'trainer') location.href = '/trainer-portal.html';
+      else if (user.role === 'staff') location.href = '/admin.html';
+      else location.href = '/profile.html';
+    }
+
+    document.getElementById('form-login').addEventListener('submit', async e => {
+      e.preventDefault(); clearError();
+      try {
+        const { user, token } = await api('/api/auth/login', {
+          method: 'POST',
+          body: {
+            email: document.getElementById('li-email').value,
+            password: document.getElementById('li-pw').value,
+          },
+        });
+        Auth.token = token;
+        goHome(user);
+      } catch (e) { showError(e.message); }
+    });
+
+    document.getElementById('form-signup').addEventListener('submit', async e => {
+      e.preventDefault(); clearError();
+      try {
+        const { user, token } = await api('/api/auth/signup', {
+          method: 'POST',
+          body: {
+            name: document.getElementById('su-name').value.trim(),
+            email: document.getElementById('su-email').value.trim(),
+            password: document.getElementById('su-pw').value,
+          },
+        });
+        Auth.token = token;
+        goHome(user);
+      } catch (e) { showError(e.message); }
+    });
+
+
+    // Auto-redirect if already signed in
+    if (Auth.token) {
+      api('/api/me').then(u => goHome(u)).catch(() => Auth.clear());
+    }
+  </script>
+</body>
+</html>

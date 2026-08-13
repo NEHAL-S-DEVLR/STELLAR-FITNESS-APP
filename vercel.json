@@ -1,0 +1,31 @@
+{
+  "rewrites": [
+    { "source": "/login.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/login.html" },
+    { "source": "/admin.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/admin.html" },
+    { "source": "/admin.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/admin.js" },
+    { "source": "/admin-nav.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/admin-nav.js" },
+    { "source": "/admissions.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/admissions.html" },
+    { "source": "/admissions.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/admissions.js" },
+    { "source": "/api.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/api.js" },
+    { "source": "/checkin.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/checkin.html" },
+    { "source": "/enquiries.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/enquiries.html" },
+    { "source": "/enquiries.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/enquiries.js" },
+    { "source": "/expenses.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/expenses.html" },
+    { "source": "/expenses.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/expenses.js" },
+    { "source": "/library.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/library.js" },
+    { "source": "/gym-pass.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/gym-pass.html" },
+    { "source": "/member-verify.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/member-verify.html" },
+    { "source": "/manual.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/manual.html" },
+    { "source": "/profile.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/profile.html" },
+    { "source": "/profile.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/profile.js" },
+    { "source": "/reports.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/reports.html" },
+    { "source": "/reports.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/reports.js" },
+    { "source": "/styles.css", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/styles.css" },
+    { "source": "/trainer-portal.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/trainer-portal.html" },
+    { "source": "/trainer-portal.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/trainer-portal.js" },
+    { "source": "/trainers.html", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/trainers.html" },
+    { "source": "/trainers.js", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/trainers.js" },
+    { "source": "/uploads/:path*", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/uploads/:path*" },
+    { "source": "/api/:path*", "destination": "https://REPLACE-WITH-YOUR-BACKEND-URL.vercel.app/api/:path*" }
+  ]
+}

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Trainer Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <a class="btn btn-tonal sm" id="manage-members-link" href="/admin.html" style="display:none;">
+        <span class="material-symbols-rounded">group_add</span>Add / Manage Members
+      </a>
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div style="margin-bottom: 24px;">
+      <h1 class="display">My Clients</h1>
+      <div class="body" id="trainer-subtitle">Personal training clients assigned to you.</div>
+      <div id="admin-trainer-picker" style="display:none; margin-top:14px;">
+        <label class="label" for="admin-trainer-select">Viewing as trainer</label>
+        <select id="admin-trainer-select" style="display:block; margin-top:6px; width:280px;"></select>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-ttab="clients"><span class="material-symbols-rounded">group</span>Clients</div>
+      <div class="tab" data-ttab="hours"><span class="material-symbols-rounded">schedule</span>Working Hours</div>
+    </div>
+
+    <!-- ===== CLIENTS TAB ===== -->
+    <div class="tab-panel active" id="tpanel-clients">
+      <!-- Stats row -->
+      <div class="grid cols-3" style="margin-bottom: 24px;">
+        <div class="stat tinted">
+          <div class="lbl">Active Clients</div>
+          <div class="num" id="stat-clients">—</div>
+          <div class="sub">Under your care</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Total Clients (All Time)</div>
+          <div class="num" id="stat-sessions">—</div>
+          <div class="sub">Across all clients</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Avg Attendance</div>
+          <div class="num" id="stat-attendance">—</div>
+          <div class="sub">Last 30 days per client</div>
+        </div>
+      </div>
+
+      <!-- Client cards -->
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">group</span>Clients</h2>
+          <input type="text" id="client-search" placeholder="Search by name…" style="max-width:220px;" />
+        </div>
+        <div id="clients-grid" class="grid cols-2"></div>
+      </div>
+    </div>
+
+    <!-- ===== WORKING HOURS TAB ===== -->
+    <div class="tab-panel" id="tpanel-hours">
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">schedule</span>Weekly Availability</h2>
+        </div>
+        <div class="field" style="max-width:260px;">
+          <label>Session duration (minutes)</label>
+          <input type="number" id="wh-duration" min="15" step="15" placeholder="60" />
+        </div>
+        <div id="wh-days"></div>
+        <div class="modal-actions" style="justify-content:flex-start; margin-top:20px;">
+          <button class="btn btn-filled" id="wh-save">
+            <span class="material-symbols-rounded">save</span>Save Working Hours
+          </button>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">event_busy</span>Exceptions</h2>
+          <button class="btn btn-tonal sm" id="wh-add-exception-btn">
+            <span class="material-symbols-rounded">add</span>Add Block / Extra Time
+          </button>
+        </div>
+        <div id="wh-exceptions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADD EXCEPTION MODAL ===== -->
+  <div class="modal-backdrop" id="add-exception-modal">
+    <div class="modal" style="max-width:440px;">
+      <h3>Add Block / Extra Time</h3>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="ex-date" />
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <select id="ex-type">
+          <option value="block">Block time off</option>
+          <option value="add">Add extra availability</option>
+        </select>
+      </div>
+      <div class="form-row cols-2" id="ex-time-row">
+        <div class="field"><label>Start time</label><input type="time" id="ex-start" /></div>
+        <div class="field"><label>End time</label><input type="time" id="ex-end" /></div>
+      </div>
+      <div class="body" id="ex-whole-day-hint" style="display:none; margin-bottom:12px;">
+        Leave times blank to block the whole day.
+      </div>
+      <div class="field">
+        <label>Reason (optional)</label>
+        <input type="text" id="ex-reason" placeholder="e.g. On leave" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('add-exception-modal')">Cancel</button>
+        <button class="btn btn-filled" id="ex-save">
+          <span class="material-symbols-rounded">save</span>Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CLIENT DETAIL MODAL ===== -->
+  <div class="modal-backdrop" id="client-modal">
+    <div class="modal" style="max-width:780px;">
+      <div class="flex between" style="margin-bottom:20px;">
+        <div class="flex gap center">
+          <div class="avatar lg" id="cm-avatar">?</div>
+          <div>
+            <h3 id="cm-name" style="margin:0;">—</h3>
+            <div class="body" id="cm-meta">—</div>
+          </div>
+        </div>
+        <button class="btn btn-text icon" onclick="closeModal('client-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="grid cols-3" style="margin-bottom:20px;">
+        <div class="stat tinted">
+          <div class="lbl">PT Status</div>
+          <div class="num" id="cm-status" style="font-size:22px;">—</div>
+          <div class="sub" id="cm-status-sub">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Last Weight</div>
+          <div class="num" id="cm-weight">—</div>
+          <div class="sub" id="cm-weight-date">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Attendance (30d)</div>
+          <div class="num" id="cm-attendance">—</div>
+          <div class="sub">days checked in</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" style="margin-bottom:16px;">
+        <div class="tab active" data-ctab="workout">
+          <span class="material-symbols-rounded">fitness_center</span>Workout Plan
+        </div>
+        <div class="tab" data-ctab="nutrition">
+          <span class="material-symbols-rounded">nutrition</span>Nutrition Plan
+        </div>
+        <div class="tab" data-ctab="info">
+          <span class="material-symbols-rounded">person</span>Member Info
+        </div>
+      </div>
+
+      <!-- Workout tab -->
+      <div class="tab-panel active" id="ctpanel-workout">
+        <div id="cm-workout-view"></div>
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button class="btn btn-filled" id="edit-workout-btn">
+            <span class="material-symbols-rounded">edit</span>Edit Workout Plan
+          </button>
+          <button class="btn btn-tonal" id="send-workout-whatsapp-btn" style="display:none;">
+            <span class="material-symbols-rounded">chat</span>Send on WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <!-- Nutrition tab -->
+      <div class="tab-panel" id="ctpanel-nutrition">
+        <div id="cm-nutrition-view"></div>
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button class="btn btn-filled" id="edit-nutrition-btn">
+            <span class="material-symbols-rounded">edit</span>Edit Nutrition Plan
+          </button>
+          <button class="btn btn-tonal" id="send-nutrition-whatsapp-btn" style="display:none;">
+            <span class="material-symbols-rounded">chat</span>Send on WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <!-- Member info tab -->
+      <div class="tab-panel" id="ctpanel-info">
+        <div id="cm-info-view"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EDIT WORKOUT MODAL ===== -->
+  <div class="modal-backdrop" id="edit-workout-modal">
+    <div class="modal" style="max-width:820px; max-height:90vh; overflow-y:auto;">
+      <div class="flex between" style="margin-bottom:16px;">
+        <h3 style="margin:0;">Edit Workout Plan — <span id="ew-member-name">—</span></h3>
+        <button class="btn btn-text icon" onclick="closeModal('edit-workout-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <div class="form-row cols-2" style="margin-bottom:16px;">
+        <div class="field">
+          <label>Plan Name</label>
+          <input type="text" id="ew-name" placeholder="e.g. Strength Foundation — Week 1" />
+        </div>
+        <div class="field">
+          <label>Assigned By</label>
+          <input type="text" id="ew-assigned-by" placeholder="Trainer name" />
+        </div>
+      </div>
+
+      <div id="ew-days"></div>
+
+      <div class="modal-actions" style="margin-top:20px;">
+        <button class="btn btn-text" onclick="closeModal('edit-workout-modal')">Cancel</button>
+        <button class="btn btn-filled" id="ew-save">
+          <span class="material-symbols-rounded">save</span>Save Workout Plan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EDIT NUTRITION MODAL ===== -->
+  <div class="modal-backdrop" id="edit-nutrition-modal">
+    <div class="modal" style="max-width:680px; max-height:90vh; overflow-y:auto;">
+      <div class="flex between" style="margin-bottom:16px;">
+        <h3 style="margin:0;">Edit Nutrition Plan — <span id="en-member-name">—</span></h3>
+        <button class="btn btn-text icon" onclick="closeModal('edit-nutrition-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <div class="grid cols-4" style="margin-bottom:16px;">
+        <div class="field">
+          <label>Calories (kcal)</label>
+          <input type="number" id="en-calories" placeholder="2200" />
+        </div>
+        <div class="field">
+          <label>Protein (g)</label>
+          <input type="number" id="en-protein" placeholder="150" />
+        </div>
+        <div class="field">
+          <label>Carbs (g)</label>
+          <input type="number" id="en-carbs" placeholder="250" />
+        </div>
+        <div class="field">
+          <label>Fats (g)</label>
+          <input type="number" id="en-fats" placeholder="70" />
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-bottom:12px;">Meals</div>
+      <div id="en-meals"></div>
+      <button class="btn btn-tonal" id="en-add-meal" style="margin-top:12px;">
+        <span class="material-symbols-rounded">add</span>Add Meal
+      </button>
+
+      <div class="modal-actions" style="margin-top:20px;">
+        <button class="btn btn-text" onclick="closeModal('edit-nutrition-modal')">Cancel</button>
+        <button class="btn btn-filled" id="en-save">
+          <span class="material-symbols-rounded">save</span>Save Nutrition Plan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/trainer-portal.js"></script>
+</body>
+</html>

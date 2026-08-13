@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Member Verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card" style="text-align:center;">
+      <div class="brand" style="justify-content:center;">
+        <div class="logo">SF</div>
+        <div>Stellar Fitness Club</div>
+      </div>
+      <div id="v-state" style="padding: 24px 0;">
+        <span class="material-symbols-rounded" style="font-size:48px; color:var(--md-primary);">hourglass_top</span>
+        <p class="sub" style="margin-top:12px;">Verifying…</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const t = params.get('t');
+    const stateEl = document.getElementById('v-state');
+
+    function render(icon, color, title, sub) {
+      stateEl.innerHTML = `
+        <span class="material-symbols-rounded" style="font-size:48px; color:${color};">${icon}</span>
+        <p style="font-size:20px; font-weight:600; margin-top:12px;">${title}</p>
+        <p class="sub">${sub}</p>
+      `;
+    }
+
+    async function run() {
+      if (!id || !t) { render('error', 'var(--md-error)', 'Invalid pass', 'This QR code is missing information.'); return; }
+      try {
+        const res = await fetch(`/api/verify-member/${id}?t=${encodeURIComponent(t)}`);
+        const data = await res.json();
+        if (!res.ok) { render('error', 'var(--md-error)', 'Invalid pass', data.error || 'Could not verify this member.'); return; }
+        const expiry = data.expiryDate ? new Date(data.expiryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+        if (data.status === 'active') {
+          render('verified', 'var(--md-success)', 'Active Member', `${data.name} (${data.memberId})<br/>${data.plan || ''} — valid until ${expiry}`);
+        } else if (data.status === 'expired') {
+          render('error', 'var(--md-error)', 'Membership Expired', `${data.name} (${data.memberId})<br/>Expired on ${expiry}`);
+        } else {
+          render('info', 'var(--md-warning)', 'No Active Subscription', `${data.name} (${data.memberId})`);
+        }
+      } catch (e) {
+        render('error', 'var(--md-error)', 'Verification failed', 'Please try again.');
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>

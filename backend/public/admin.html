@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div>
+      <h1 class="display">Admin Dashboard</h1>
+      <div class="body">Manage members, attendance, plans, and notifications.</div>
+    </div>
+
+    <div class="tabs mt-24">
+      <div class="tab active" data-atab="overview"><span class="material-symbols-rounded">dashboard</span>Overview</div>
+      <div class="tab" data-atab="members"><span class="material-symbols-rounded">groups</span>Members</div>
+      <div class="tab" data-atab="notifications"><span class="material-symbols-rounded">campaign</span>Notifications</div>
+      <div class="tab" data-atab="finance"><span class="material-symbols-rounded">payments</span>Finance</div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-panel active" id="apanel-overview">
+      <!-- Row 1: Member counts (existing) -->
+      <div class="grid cols-4">
+        <div class="stat tinted clickable" data-goto="all">
+          <div class="lbl">Total Members</div>
+          <div class="num" id="ins-members">—</div>
+          <div class="sub" id="ins-members-sub">—</div>
+        </div>
+        <div class="stat clickable" data-goto="todayCheckin">
+          <div class="lbl">Checked in Today</div>
+          <div class="num" id="ins-today">—</div>
+          <div class="sub" id="ins-today-sub">—</div>
+        </div>
+        <div class="stat clickable" data-goto="active">
+          <div class="lbl">Active this Week</div>
+          <div class="num" id="ins-week">—</div>
+          <div class="sub"><a class="sub-link" data-goto="inactive" id="ins-week-sub">—</a></div>
+        </div>
+        <div class="stat clickable" data-goto="hasPlan">
+          <div class="lbl">Plans Assigned</div>
+          <div class="num" id="ins-plans">—</div>
+          <div class="sub"><a class="sub-link" data-goto="noPlan" id="ins-plans-sub">—</a></div>
+        </div>
+      </div>
+
+      <!-- Row 2: Revenue & financial (dashboard API) -->
+      <div class="grid cols-4 mt-24">
+        <div class="stat tinted">
+          <div class="lbl">Today's Revenue</div>
+          <div class="num" id="dash-today-rev">—</div>
+          <div class="sub" id="dash-today-adm">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Monthly Revenue</div>
+          <div class="num" id="dash-month-rev">—</div>
+          <div class="sub" id="dash-month-exp">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Monthly Profit</div>
+          <div class="num" id="dash-profit">—</div>
+          <div class="sub">Revenue − Expenses</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Outstanding Balance</div>
+          <div class="num" id="dash-outstanding">—</div>
+          <div class="sub" id="dash-outstanding-sub">—</div>
+        </div>
+      </div>
+
+      <!-- Row 3: Charts -->
+      <div class="grid cols-2 mt-24">
+        <div class="card">
+          <div class="card-header"><h2>Attendance — Last 14 Days</h2></div>
+          <canvas id="attendance-chart" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Member Status</h2></div>
+          <canvas id="status-chart" height="180"></canvas>
+        </div>
+      </div>
+
+      <!-- Row 4: Revenue & admission trends -->
+      <div class="grid cols-2 mt-24">
+        <div class="card">
+          <div class="card-header"><h2><span class="material-symbols-rounded">trending_up</span>Revenue — Last 30 Days</h2></div>
+          <canvas id="dash-rev-chart" height="160"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2><span class="material-symbols-rounded">assignment_add</span>Admissions — Last 30 Days</h2></div>
+          <canvas id="dash-adm-chart" height="160"></canvas>
+        </div>
+      </div>
+
+      <!-- Row 5: Trainer performance + Expiring memberships -->
+      <div class="grid cols-2 mt-24">
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="material-symbols-rounded">sports</span>Trainer Performance</h2>
+            <span class="body">This month</span>
+          </div>
+          <div id="dash-trainers">
+            <div class="empty"><span class="material-symbols-rounded">sports</span>No trainers yet</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="material-symbols-rounded">schedule</span>Expiring Soon</h2>
+            <span class="chip warning" id="dash-expiring-count"></span>
+          </div>
+          <div id="dash-expiring">
+            <div class="empty"><span class="material-symbols-rounded">check_circle</span>No memberships expiring in 14 days</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 6: Recent admissions -->
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">receipt_long</span>Recent Admissions</h2>
+          <a href="/admissions.html" class="btn btn-tonal sm">
+            <span class="material-symbols-rounded">open_in_new</span>View All
+          </a>
+        </div>
+        <div id="dash-recent-adm">
+          <div class="empty"><span class="material-symbols-rounded">receipt_long</span>No admissions recorded yet</div>
+        </div>
+      </div>
+
+      <!-- Row 7: Nutrition log (existing) -->
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">restaurant</span>Today's Nutrition Log</h2>
+          <span class="chip" id="food-today-count">—</span>
+        </div>
+        <div class="body" style="margin-bottom: 12px;">
+          Live view of every member's calories consumed today. Click a member to see their full food log.
+        </div>
+        <div id="food-today-list"></div>
+      </div>
+    </div>
+
+    <!-- MEMBERS -->
+    <div class="tab-panel" id="apanel-members">
+      <div class="card">
+        <div class="card-header">
+          <h2>Members</h2>
+          <div class="flex gap">
+            <input type="text" id="member-search" placeholder="Search by name or email…" style="width: 260px;" />
+            <button class="btn btn-tonal" id="manage-batches-btn">
+              <span class="material-symbols-rounded">groups</span> Batches
+            </button>
+            <button class="btn btn-tonal" id="checkin-qr-btn">
+              <span class="material-symbols-rounded">qr_code_2</span> Check-in QR
+            </button>
+            <button class="btn btn-filled" id="add-member-btn">
+              <span class="material-symbols-rounded">person_add</span> Add
+            </button>
+          </div>
+        </div>
+        <div class="filter-row" id="member-filters"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Goal</th>
+              <th>Weight</th>
+              <th>BMI</th>
+              <th>Last check-in</th>
+              <th>Subscription</th>
+              <th>Trainer</th>
+              <th>Batch</th>
+              <th>Plan</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="members-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="tab-panel" id="apanel-notifications">
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-header"><h2><span class="material-symbols-rounded">campaign</span>Send Notification</h2></div>
+          <div class="form-row cols-2">
+            <div class="field">
+              <label>Type</label>
+              <select id="nt-type">
+                <option value="offer">Offer / Promotion</option>
+                <option value="general">General announcement</option>
+                <option value="expiry">Subscription reminder</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Recipient</label>
+              <select id="nt-recipient"><option value="all">All members</option></select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Title</label>
+            <input type="text" id="nt-title" placeholder="e.g. 30% off annual plans this month" />
+          </div>
+          <div class="field">
+            <label>Message</label>
+            <textarea id="nt-body" rows="4"></textarea>
+          </div>
+          <div class="flex gap">
+            <button class="btn btn-filled" id="nt-send"><span class="material-symbols-rounded">send</span>Send</button>
+            <button class="btn btn-tonal sm" id="nt-template-offer">Offer template</button>
+            <button class="btn btn-tonal sm" id="nt-template-expiry">Expiry template</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="material-symbols-rounded">schedule</span>Subscription Watch</h2>
+            <span class="chip" id="expiry-count"></span>
+          </div>
+          <div class="body" style="margin-bottom: 14px;">
+            Members whose subscription has expired or is expiring within 14 days.
+          </div>
+          <div id="expiry-list"></div>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-24">
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="material-symbols-rounded">format_quote</span>Daily Quote</h2>
+            <span class="chip" id="quote-active-count"></span>
+          </div>
+          <div class="body" style="margin-bottom: 14px;">
+            Send a motivational quote to every member with an active subscription — over WhatsApp, one tap per recipient.
+          </div>
+          <div class="field">
+            <textarea id="dq-message" rows="3" placeholder="Type today's quote…"></textarea>
+          </div>
+          <div class="flex gap" style="margin-bottom:14px;">
+            <button class="btn btn-filled" id="dq-send">
+              <span class="material-symbols-rounded">send</span>Send to Active Members
+            </button>
+            <button class="btn btn-tonal sm" id="dq-shuffle">
+              <span class="material-symbols-rounded">shuffle</span>Suggest a quote
+            </button>
+            <button class="btn btn-outlined sm" id="dq-copy">
+              <span class="material-symbols-rounded">content_copy</span>Copy for WhatsApp Group
+            </button>
+          </div>
+          <div class="body" style="margin-bottom:8px; font-size:12px;">
+            No pre-fill link exists for an already-created WhatsApp group — copy the quote and paste it into your gym's group manually, or send one by one below.
+          </div>
+          <div id="dq-results"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2><span class="material-symbols-rounded">search</span>Membership Renewal</h2></div>
+          <div class="body" style="margin-bottom: 14px;">
+            Search any member, write your own renewal message — the days remaining until expiry is added automatically.
+          </div>
+          <div class="field">
+            <input type="text" id="rn-search" placeholder="Search by name or phone…" autocomplete="off" />
+          </div>
+          <div id="rn-search-results"></div>
+          <div id="rn-selected" style="display:none; margin-top:14px;">
+            <div class="body" id="rn-selected-info" style="margin-bottom:10px;"></div>
+            <div class="field">
+              <label>Message</label>
+              <textarea id="rn-message" rows="3"></textarea>
+            </div>
+            <button class="btn btn-filled" id="rn-send">
+              <span class="material-symbols-rounded">send</span>Send Renewal Reminder
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header"><h2><span class="material-symbols-rounded">groups</span>Message the Gym Group</h2></div>
+        <div class="body" style="margin-bottom: 14px;">
+          Type any message — an announcement, a schedule change, anything — and copy it ready to paste into the gym's WhatsApp group. WhatsApp doesn't allow a link to pre-fill a message into an existing group chat, so this is the fastest reliable way to get it there.
+        </div>
+        <div class="field">
+          <textarea id="gm-message" rows="3" placeholder="Type a message for the whole gym…"></textarea>
+        </div>
+        <button class="btn btn-filled" id="gm-copy">
+          <span class="material-symbols-rounded">content_copy</span>Copy Message
+        </button>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header"><h2>Recent Broadcasts</h2></div>
+        <div id="broadcast-log"></div>
+      </div>
+    </div>
+  </div>
+
+    <!-- FINANCE -->
+    <div class="tab-panel" id="apanel-finance">
+      <div class="grid cols-4">
+        <div class="stat tinted">
+          <div class="lbl">Revenue this Month</div>
+          <div class="num" id="fin-mtd">—</div>
+          <div class="sub" id="fin-mtd-sub">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Revenue this Year</div>
+          <div class="num" id="fin-ytd">—</div>
+          <div class="sub" id="fin-ytd-sub">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Pending Renewals</div>
+          <div class="num" id="fin-pending">—</div>
+          <div class="sub" id="fin-pending-sub">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Active Subscriptions</div>
+          <div class="num" id="fin-active">—</div>
+          <div class="sub">Currently paid up</div>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">savings</span>Gym Revenue — Membership Fees Only</h2>
+        </div>
+        <div class="body" style="margin-bottom:16px;">
+          Membership/admission fees only — personal training revenue is tracked separately (see the Trainers page for each trainer's PT revenue and commission split).
+        </div>
+        <div class="grid cols-4">
+          <div class="stat tinted">
+            <div class="lbl">Gym Revenue this Month</div>
+            <div class="num" id="fin-gym-mtd">—</div>
+            <div class="sub" id="fin-gym-mtd-sub">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Gym Revenue this Year</div>
+            <div class="num" id="fin-gym-ytd">—</div>
+            <div class="sub" id="fin-gym-ytd-sub">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">PT Revenue this Month</div>
+            <div class="num" id="fin-pt-mtd">—</div>
+            <div class="sub" id="fin-pt-mtd-sub">—</div>
+          </div>
+          <div class="stat">
+            <div class="lbl">PT Revenue this Year</div>
+            <div class="num" id="fin-pt-ytd">—</div>
+            <div class="sub" id="fin-pt-ytd-sub">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid cols-2 mt-24">
+        <div class="card">
+          <div class="card-header"><h2>Gym Revenue — Last 6 Months</h2></div>
+          <canvas id="revenue-chart" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Payment Methods</h2></div>
+          <canvas id="method-chart" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">pending_actions</span>Pending Renewal Requests</h2>
+          <span class="chip" id="fin-pending-count"></span>
+        </div>
+        <div id="fin-pending-list"></div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">local_offer</span>Subscription Plans</h2>
+          <button class="btn btn-filled sm" id="add-plan-btn">
+            <span class="material-symbols-rounded">add</span>Add plan
+          </button>
+        </div>
+        <div id="plans-list" class="grid cols-2"></div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">receipt_long</span>Recent Payments</h2>
+          <div class="flex gap">
+            <select id="payment-filter" style="width: 160px;">
+              <option value="">All statuses</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="refunded">Refunded</option>
+            </select>
+            <button class="btn btn-tonal sm" id="record-payment-btn">
+              <span class="material-symbols-rounded">add</span>Record payment
+            </button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Member</th>
+              <th>Plan</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Reference</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="payments-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  <!-- MEMBER DETAIL MODAL -->
+  <div class="modal-backdrop" id="member-modal">
+    <div class="modal" style="max-width: 860px;">
+      <div class="flex between">
+        <div class="flex gap center">
+          <div class="avatar lg" id="md-avatar">?</div>
+          <div>
+            <h3 id="md-name" style="margin: 0;">—</h3>
+            <div class="body" id="md-email"></div>
+          </div>
+        </div>
+        <button class="btn btn-text icon" onclick="closeModal('member-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <div class="tabs mt-18">
+        <div class="tab active" data-mtab="overview">Overview</div>
+        <div class="tab" data-mtab="subscription">Subscription</div>
+        <div class="tab" data-mtab="attendance">Attendance</div>
+        <div class="tab" data-mtab="workout">Workout Plan</div>
+        <div class="tab" data-mtab="nutrition">Nutrition Plan</div>
+        <div class="tab" data-mtab="foodlog">Food Log</div>
+        <div class="tab" data-mtab="history">Edit History</div>
+      </div>
+
+      <div class="tab-panel active" id="mpanel-overview">
+        <div class="form-row cols-2">
+          <div class="field"><label>Name</label><input type="text" id="md-name-input" /></div>
+          <div class="field"><label>Phone (WhatsApp)</label><input type="text" id="md-phone" placeholder="+91 98765 43210" /></div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="field"><label>Goal</label><input type="text" id="md-goal" /></div>
+          <div class="field"><label>Height (cm)</label><input type="number" id="md-height" /></div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="field"><label>Date of Birth</label><input type="date" id="md-dob" /></div>
+          <div class="field">
+            <label>Blood Group</label>
+            <select id="md-blood-group">
+              <option value="">— Select —</option>
+              <option value="A+">A+</option><option value="A-">A-</option>
+              <option value="B+">B+</option><option value="B-">B-</option>
+              <option value="O+">O+</option><option value="O-">O-</option>
+              <option value="AB+">AB+</option><option value="AB-">AB-</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="field"><label>Photo URL</label><input type="url" id="md-photo-url" placeholder="https://…" /></div>
+          <div class="field"><label>Assigned Trainer</label><select id="md-trainer"><option value="">None</option></select></div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="field"><label>Batch</label><select id="md-batch"><option value="">No batch</option></select></div>
+          <div></div>
+        </div>
+        <div class="grid cols-2 mt-12">
+          <div class="stat"><div class="lbl">Current Weight</div><div class="num" id="md-weight">—</div></div>
+          <div class="stat"><div class="lbl">BMI</div><div class="num" id="md-bmi">—</div><div class="sub" id="md-bmi-cat">—</div></div>
+        </div>
+
+        <div class="section-title mt-18">Emergency Contact</div>
+        <div class="form-row cols-2">
+          <div class="field"><label>Contact Name</label><input type="text" id="md-ec-name" placeholder="Parent / Spouse / Friend" /></div>
+          <div class="field"><label>Phone</label><input type="text" id="md-ec-phone" placeholder="+91 98765 43210" /></div>
+        </div>
+        <div class="field"><label>Relation</label><input type="text" id="md-ec-relation" placeholder="e.g. Spouse, Parent, Friend" /></div>
+
+        <div class="field mt-12">
+          <label>Medical History / Notes</label>
+          <textarea id="md-medical" rows="3" placeholder="Injuries, conditions, medications, allergies…"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-danger" id="md-delete"><span class="material-symbols-rounded">delete</span>Remove</button>
+          <a class="btn btn-tonal" id="md-gym-pass" href="#" target="_blank"><span class="material-symbols-rounded">badge</span>Gym Pass</a>
+          <button class="btn btn-filled" id="md-save"><span class="material-symbols-rounded">save</span>Save</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="mpanel-subscription">
+        <div class="form-row cols-2">
+          <div class="field"><label>Plan</label><input type="text" id="sub-plan" /></div>
+          <div class="field"><label>Start date</label><input type="date" id="sub-start" /></div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="field"><label>Expiry date</label><input type="date" id="sub-expiry" /></div>
+          <div style="display: flex; align-items: flex-end;">
+            <span class="chip" id="sub-status-pill">—</span>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-tonal" id="sub-whatsapp"><span class="material-symbols-rounded">chat</span>WhatsApp</button>
+          <button class="btn btn-tonal" id="sub-notify"><span class="material-symbols-rounded">campaign</span>In-app reminder</button>
+          <button class="btn btn-filled" id="sub-save"><span class="material-symbols-rounded">save</span>Save</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="mpanel-foodlog">
+        <div class="flex between" style="margin-bottom: 14px;">
+          <div class="body">What this member actually ate, logged from the web or the Android app.</div>
+          <input type="date" id="foodlog-date" style="width: 180px;" />
+        </div>
+        <div class="grid cols-4" id="foodlog-macros"></div>
+        <div id="foodlog-entries" class="mt-18"></div>
+        <div class="section-title">Last 7 days — calories</div>
+        <canvas id="foodlog-trend" height="140"></canvas>
+      </div>
+
+      <div class="tab-panel" id="mpanel-history">
+        <div class="body" style="margin-bottom: 14px;">
+          Complete edit history for this member — every change made by the member or an admin is recorded here.
+        </div>
+        <div id="md-history"></div>
+      </div>
+
+      <div class="tab-panel" id="mpanel-attendance">
+        <div class="section-title">Full Record</div>
+        <div id="md-attendance-heatmap" style="overflow-x:auto; padding:4px 0 18px;"></div>
+
+        <div class="flex between" style="margin-bottom: 12px;">
+          <div class="body">Last 90 days — click a day to toggle attendance.</div>
+          <button class="btn btn-tonal sm" id="md-checkin-today">
+            <span class="material-symbols-rounded">check</span>Mark today
+          </button>
+        </div>
+        <div class="attendance-grid" id="md-attendance"></div>
+      </div>
+
+      <div class="tab-panel" id="mpanel-workout">
+        <div class="field">
+          <label>Plan name</label>
+          <input type="text" id="wp-name" placeholder="e.g. Push/Pull/Legs — Hypertrophy" />
+        </div>
+        <div class="body" style="margin-bottom: 12px;">
+          Pick exercises by muscle group and assign a machine. Sets/reps are free-form (e.g. <code>4 x 8</code>, <code>30 min</code>).
+        </div>
+        <div id="wp-day-cards"></div>
+        <div class="modal-actions">
+          <button class="btn btn-filled" id="wp-save"><span class="material-symbols-rounded">save</span>Save workout plan</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="mpanel-nutrition">
+        <div class="grid cols-4">
+          <div class="field"><label>Calories</label><input type="number" id="np-cal" /></div>
+          <div class="field"><label>Protein (g)</label><input type="number" id="np-pro" /></div>
+          <div class="field"><label>Carbs (g)</label><input type="number" id="np-carb" /></div>
+          <div class="field"><label>Fats (g)</label><input type="number" id="np-fat" /></div>
+        </div>
+        <div class="body" style="margin-bottom: 8px;">Meals — one per row, format: <code>Meal name | items</code></div>
+        <textarea id="np-meals" rows="6" style="font-family: 'JetBrains Mono', monospace; font-size: 12px;"></textarea>
+        <div class="modal-actions">
+          <button class="btn btn-filled" id="np-save"><span class="material-symbols-rounded">save</span>Save nutrition plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD MEMBER MODAL -->
+  <div class="modal-backdrop" id="add-member-modal">
+    <div class="modal">
+      <h3>Add a new member</h3>
+      <div class="form-row cols-2">
+        <div class="field"><label>Name</label><input type="text" id="new-name" /></div>
+        <div class="field"><label>Email</label><input type="email" id="new-email" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Phone (WhatsApp)</label><input type="text" id="new-phone" placeholder="+91 98765 43210" /></div>
+        <div class="field"><label>Height (cm)</label><input type="number" id="new-height" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Starting weight (kg)</label><input type="number" step="0.1" id="new-weight" /></div>
+        <div class="field"><label>Goal</label><input type="text" id="new-goal" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Subscription plan</label>
+          <select id="new-plan">
+            <option>Monthly Standard</option>
+            <option>Monthly Premium</option>
+            <option>Quarterly Standard</option>
+            <option>Annual Premium</option>
+          </select>
+        </div>
+        <div class="field"><label>Length (days)</label><input type="number" id="new-sub-days" value="30" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Batch</label>
+          <select id="new-batch"><option value="">No batch</option></select>
+        </div>
+        <div class="field">
+          <label>Joining as</label>
+          <div class="radio-group" id="new-member-type-group">
+            <label><input type="radio" name="new-member-type" value="regular" checked /> Regular member</label>
+            <label style="margin-left:16px;"><input type="radio" name="new-member-type" value="pt" /> PT member</label>
+          </div>
+        </div>
+      </div>
+      <div id="new-pt-fields" style="display:none;">
+        <div class="form-row cols-2">
+          <div class="field">
+            <label>Trainer</label>
+            <select id="new-pt-trainer"><option value="">Select trainer…</option></select>
+          </div>
+          <div class="field">
+            <label>PT Package</label>
+            <select id="new-pt-package"><option value="">Select package…</option></select>
+          </div>
+        </div>
+        <div class="field"><label>PT Price Paid (₹)</label><input type="number" id="new-pt-price" placeholder="Auto-filled from package" /></div>
+      </div>
+      <div class="field"><label>Temporary password</label><input type="text" id="new-pw" value="demo1234" /></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('add-member-modal')">Cancel</button>
+        <button class="btn btn-filled" id="new-save"><span class="material-symbols-rounded">person_add</span>Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEMBER CREATED — SEND CREDENTIALS -->
+  <div class="modal-backdrop" id="member-created-modal">
+    <div class="modal">
+      <div class="flex" style="align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="material-symbols-rounded" style="color:var(--md-success); font-size:28px;">check_circle</span>
+        <h3 style="margin:0;">Member created</h3>
+      </div>
+      <div class="body" id="mc-summary" style="margin-bottom:16px;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('member-created-modal')">Done</button>
+        <button class="btn btn-filled" id="mc-send-creds">
+          <span class="material-symbols-rounded">chat</span>Send Login Credentials on WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANAGE BATCHES MODAL -->
+  <div class="modal-backdrop" id="batches-modal">
+    <div class="modal">
+      <div class="flex between" style="margin-bottom:16px;">
+        <h3 style="margin:0;">Batches</h3>
+        <button class="btn btn-text icon" onclick="closeModal('batches-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+      <div class="flex gap" style="margin-bottom:16px;">
+        <input type="text" id="new-batch-name" placeholder="e.g. Morning Batch, Evening Batch, Yoga…" style="flex:1;" />
+        <input type="number" id="new-batch-capacity" placeholder="Limit" min="1" style="width:90px;" title="Max members in this batch (leave blank for no limit)" />
+        <button class="btn btn-filled sm" id="add-batch-btn"><span class="material-symbols-rounded">add</span>Add</button>
+      </div>
+      <div id="batches-list"></div>
+    </div>
+  </div>
+
+  <!-- CHECK-IN QR MODAL -->
+  <div class="modal-backdrop" id="checkin-qr-modal">
+    <div class="modal" style="max-width:420px; text-align:center;">
+      <div class="flex between" style="margin-bottom:16px; text-align:left;">
+        <h3 style="margin:0;">Attendance Check-in QR</h3>
+        <button class="btn btn-text icon" onclick="closeModal('checkin-qr-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+      <div class="body" style="margin-bottom:16px; text-align:left;">
+        Print this and stick it at the entrance. Members open their app, scan it with their phone camera, and today's attendance is marked automatically — no app camera scanner needed.
+      </div>
+      <img id="checkin-qr-img" src="" alt="Check-in QR code" style="width:260px; height:260px; border-radius:12px; background:#fff; padding:12px;" />
+      <div class="flex gap" style="margin-top:18px; justify-content:center;">
+        <button class="btn btn-outlined sm" id="checkin-qr-print"><span class="material-symbols-rounded">print</span>Print</button>
+        <button class="btn btn-tonal sm" id="checkin-qr-regenerate"><span class="material-symbols-rounded">refresh</span>Regenerate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT PLAN MODAL -->
+  <div class="modal-backdrop" id="plan-modal">
+    <div class="modal">
+      <h3 id="plan-modal-title">Add subscription plan</h3>
+      <div class="form-row cols-2">
+        <div class="field"><label>Name</label><input type="text" id="plan-name" placeholder="e.g. Monthly Standard" /></div>
+        <div class="field"><label>Price (₹)</label><input type="number" step="0.01" id="plan-price" placeholder="1500" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Duration (days)</label><input type="number" id="plan-duration" placeholder="30" /></div>
+        <div class="field">
+          <label>Status</label>
+          <select id="plan-active">
+            <option value="true">Active — visible to members</option>
+            <option value="false">Inactive — hidden</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Description</label><textarea id="plan-desc" rows="2"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('plan-modal')">Cancel</button>
+        <button class="btn btn-filled" id="plan-save"><span class="material-symbols-rounded">save</span>Save plan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECORD PAYMENT MODAL -->
+  <div class="modal-backdrop" id="pay-modal">
+    <div class="modal">
+      <h3>Record a payment</h3>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Member</label>
+          <select id="pay-member"></select>
+        </div>
+        <div class="field">
+          <label>Plan</label>
+          <select id="pay-plan"></select>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="pay-amount" /></div>
+        <div class="field">
+          <label>Method</label>
+          <select id="pay-method">
+            <option value="cash">Cash</option>
+            <option value="upi">UPI</option>
+            <option value="card">Card</option>
+            <option value="bank_transfer">Bank transfer</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Payment date</label><input type="date" id="pay-date" /></div>
+        <div class="field"><label>Reference / txn id</label><input type="text" id="pay-ref" placeholder="TXN000123" /></div>
+      </div>
+      <div class="field"><label>Notes</label><input type="text" id="pay-notes" placeholder="Optional" /></div>
+      <div class="field">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="pay-extend" checked style="width: auto;" />
+          <span>Also extend member's subscription by this plan's duration</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('pay-modal')">Cancel</button>
+        <button class="btn btn-filled" id="pay-save"><span class="material-symbols-rounded">check</span>Record payment</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/library.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>

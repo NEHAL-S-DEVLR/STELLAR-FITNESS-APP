@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Expenses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div style="margin-bottom: 24px;">
+      <h1 class="display">Expense Management</h1>
+      <div class="body">Track and manage gym operating expenses by category.</div>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- Stats bar -->
+    <div class="grid cols-4" id="stats-bar">
+      <div class="stat tinted">
+        <div class="lbl">This Month's Expenses</div>
+        <div class="num" id="stat-month-total">—</div>
+        <div class="sub" id="stat-month-sub">Loading…</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">This Year's Expenses</div>
+        <div class="num" id="stat-year-total">—</div>
+        <div class="sub" id="stat-year-sub">—</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Largest Category</div>
+        <div class="num" id="stat-top-cat" style="font-size: 20px; margin-top: 4px;">—</div>
+        <div class="sub" id="stat-top-cat-amt">—</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Entries This Month</div>
+        <div class="num" id="stat-entries">—</div>
+        <div class="sub">expense records</div>
+      </div>
+    </div>
+
+    <!-- Two-column: Add form + Summary -->
+    <div class="grid cols-2 mt-24">
+
+      <!-- Add Expense Form -->
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">add_circle</span>Add Expense</h2>
+        </div>
+        <div id="add-error" class="error-banner"></div>
+        <div class="form-row cols-2">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="exp-date" />
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select id="exp-category">
+              <option value="">Select category…</option>
+              <option value="Rent">Rent</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Salary">Salary</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Cleaning">Cleaning</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Miscellaneous">Miscellaneous</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row cols-2">
+          <div class="field">
+            <label>Amount (₹)</label>
+            <input type="number" id="exp-amount" placeholder="0" min="0" step="0.01" />
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <input type="text" id="exp-description" placeholder="Optional note" />
+          </div>
+        </div>
+        <div class="flex gap">
+          <button class="btn btn-filled" id="add-exp-btn">
+            <span class="material-symbols-rounded">save</span>Record Expense
+          </button>
+          <button class="btn btn-text" id="clear-exp-btn">Clear</button>
+        </div>
+      </div>
+
+      <!-- Monthly Summary -->
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">pie_chart</span>Monthly Summary</h2>
+          <div class="flex gap center">
+            <select id="summary-month" style="width: 130px;"></select>
+            <select id="summary-year" style="width: 90px;"></select>
+          </div>
+        </div>
+        <div id="summary-loading" class="body" style="padding: 20px 0;">Loading…</div>
+        <div id="summary-content" style="display:none;">
+          <canvas id="summary-chart" height="200"></canvas>
+          <div style="margin-top: 16px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th style="text-align:right;">Count</th>
+                  <th style="text-align:right;">Total</th>
+                </tr>
+              </thead>
+              <tbody id="summary-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="summary-empty" class="empty" style="display:none;">
+          <span class="material-symbols-rounded">receipt_long</span>
+          No expenses recorded for this month.
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense History -->
+    <div class="card mt-24">
+      <div class="card-header">
+        <h2><span class="material-symbols-rounded">history</span>Expense History</h2>
+        <div class="flex gap center" style="flex-wrap: wrap; gap: 10px;">
+          <div class="flex gap center">
+            <label style="font-size: 13px; color: var(--md-on-surface-variant); white-space: nowrap;">From</label>
+            <input type="date" id="filter-from" style="width: 155px;" />
+          </div>
+          <div class="flex gap center">
+            <label style="font-size: 13px; color: var(--md-on-surface-variant); white-space: nowrap;">To</label>
+            <input type="date" id="filter-to" style="width: 155px;" />
+          </div>
+          <select id="filter-category" style="width: 150px;">
+            <option value="">All categories</option>
+            <option value="Rent">Rent</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Salary">Salary</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Cleaning">Cleaning</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Miscellaneous">Miscellaneous</option>
+          </select>
+          <button class="btn btn-tonal sm" id="filter-btn">
+            <span class="material-symbols-rounded">filter_list</span>Apply
+          </button>
+        </div>
+      </div>
+
+      <div id="history-loading" class="body" style="padding: 20px 0;">Loading…</div>
+      <div id="history-content" style="display:none;">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Description</th>
+              <th>Recorded By</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+      </div>
+      <div id="history-empty" class="empty" style="display:none;">
+        <span class="material-symbols-rounded">receipt_long</span>
+        No expenses found for the selected range.
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Expense Modal -->
+  <div class="modal-backdrop" id="edit-modal">
+    <div class="modal">
+      <div class="flex between" style="margin-bottom: 16px;">
+        <h3>Edit Expense</h3>
+        <button class="btn btn-text icon" onclick="closeModal('edit-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="edit-date" />
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="edit-category">
+            <option value="Rent">Rent</option>
+            <option value="Electricity">Electricity</option>
+            <option value="Salary">Salary</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Cleaning">Cleaning</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Miscellaneous">Miscellaneous</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Amount (₹)</label>
+          <input type="number" id="edit-amount" min="0" step="0.01" />
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <input type="text" id="edit-description" placeholder="Optional note" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('edit-modal')">Cancel</button>
+        <button class="btn btn-filled" id="edit-save-btn">
+          <span class="material-symbols-rounded">save</span>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script src="/expenses.js"></script>
+</body>
+</html>

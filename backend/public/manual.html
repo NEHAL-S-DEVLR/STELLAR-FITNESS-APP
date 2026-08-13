@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .man-nav { position: sticky; top: 84px; }
+    .man-nav a { display: block; padding: 8px 12px; border-radius: var(--r-sm); color: var(--md-on-surface-variant); text-decoration: none; font-size: 14px; margin-bottom: 2px; }
+    .man-nav a:hover { background: var(--md-surface-container-high); color: var(--md-on-surface); }
+    .man-section { scroll-margin-top: 90px; }
+    .man-step { display: flex; gap: 14px; margin-bottom: 18px; }
+    .man-step .num {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--md-primary); color: var(--md-on-primary);
+      display: grid; place-items: center; font-weight: 700; font-size: 13px;
+    }
+    .man-step .txt { padding-top: 3px; }
+    .man-step .txt strong { color: var(--md-on-surface); }
+  </style>
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div style="margin-bottom: 24px;">
+      <h1 class="display">Manual for Admin and General Trainee</h1>
+      <div class="body">How to operate the whole system, step by step — for the admin and for trainers.</div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 220px 1fr; gap: 28px; align-items: start;">
+      <div class="card man-nav">
+        <div class="section-title" style="margin-bottom:8px;">On this page</div>
+        <a href="#logging-in">Logging in</a>
+        <a href="#add-member">Add a new member</a>
+        <a href="#batches">Batches</a>
+        <a href="#checkin">QR attendance check-in</a>
+        <a href="#gym-pass">Digital gym pass</a>
+        <a href="#staff-permissions">Staff &amp; permissions</a>
+        <a href="#add-trainer">Add a trainer</a>
+        <a href="#pt">Set up Personal Training</a>
+        <a href="#cancellations">Cancellations &amp; refunds</a>
+        <a href="#renew">Renew an expired membership</a>
+        <a href="#enquiries">Handle enquiries</a>
+        <a href="#trainer-side">Trainer: clients &amp; plans</a>
+        <a href="#whatsapp">WhatsApp, receipts &amp; invoices</a>
+        <a href="#money">Money — Finance &amp; Reports</a>
+        <a href="#daily">Daily checklist</a>
+      </div>
+
+      <div>
+        <div class="card man-section" id="logging-in">
+          <h3><span class="material-symbols-rounded">login</span> Logging in</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">Go to the site and click <strong>Login</strong> in the top navigation.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">Sign in with your email and password.
+            <ul style="margin-top:6px;">
+              <li><strong>Admin</strong> lands on the Admin Dashboard — full control over everything.</li>
+              <li><strong>Trainer</strong> lands on the Trainer Portal — their own clients only.</li>
+              <li><strong>Member</strong> lands on their personal dashboard.</li>
+            </ul>
+          </div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">Admin can also open the Trainer Portal and use the <strong>"Viewing as trainer"</strong> dropdown at the top to see and manage exactly what any specific trainer sees — useful for setting up a trainer's clients on their behalf.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="add-member">
+          <h3><span class="material-symbols-rounded">person_add</span> Adding a new member</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">Admin Dashboard → <strong>Members</strong> tab → <strong>Add Member</strong> button.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">Fill in name, email, and <strong>phone number</strong> — the phone is what lets you send them WhatsApp messages later (login details, receipts, diet/workout plans), so always fill it in.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">Set their subscription plan and length in days, and a temporary password (or leave the default). This is what "buying a package" looks like — the account and their first membership period are created together.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">Choose their <strong>member type</strong> — <strong>Regular</strong> (gym floor only) or <strong>PT</strong> (personal training). Picking PT reveals a second set of fields right there — trainer, package, and price — so the PT assignment is created in the same step instead of a separate one afterward.</div></div>
+          <div class="man-step"><div class="num">5</div><div class="txt">Optionally assign them to a <strong>Batch</strong> (Morning, Evening, Yoga, or whatever batches you've set up — see "Batches" below).</div></div>
+          <div class="man-step"><div class="num">6</div><div class="txt">Click <strong>Create</strong>. A popup immediately offers <strong>"Send Login Credentials on WhatsApp"</strong> — click it to send them their email + password so they can log in right away.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="batches">
+          <h3><span class="material-symbols-rounded">groups</span> Batches</h3>
+          <div class="body" style="margin-bottom:14px;">A batch is just a named group members belong to — Morning, Evening, Yoga, or any label that matches how your gym actually splits members into time slots or class types. There's no physical-location/floor concept, just the name.</div>
+          <div class="man-step"><div class="num">1</div><div class="txt">Members tab → <strong>Batches</strong> button → type a name (e.g. "Morning Batch") and, optionally, a <strong>Limit</strong> — the max number of members allowed in it at once. Leave the limit blank for no cap → <strong>Add</strong>.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">A member picks their batch when they join, right there in the Add Member form — or an existing member can be moved to a different batch from their profile's <strong>Batch</strong> field. Either way, once a batch hits its limit it shows <strong>FULL</strong> and can't be picked for another member until someone leaves it or you raise the limit.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">The Members table's <strong>Batch</strong> column shows who's in which batch, and the Batches list shows each one's live count as "X/limit" (or just "X" if it has no limit) — that count is always the real number of members currently in it.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">Change a batch's limit any time from the number field next to it in the Batches list — this doesn't remove anyone already in it, it only affects whether new members can still be added.</div></div>
+          <div class="man-step"><div class="num">5</div><div class="txt">Deleting a batch doesn't delete its members — they just become unassigned (Batch shows blank) and can be re-assigned any time.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="checkin">
+          <h3><span class="material-symbols-rounded">qr_code_2</span> QR attendance check-in</h3>
+          <div class="body" style="margin-bottom:14px;">One shared QR code, printed and stuck at the entrance, marks attendance for whoever scans it — no separate app-camera scanner needed.</div>
+          <div class="man-step"><div class="num">1</div><div class="txt">Members tab → <strong>Check-in QR</strong> button shows the code and lets you <strong>Print</strong> it.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">A member opens their phone's regular camera app, scans the code, and it opens a page in their browser that automatically marks today's attendance for them (they need to be logged in — if not, it sends them to login first, then finishes automatically).</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">Their full attendance history then shows as a GitHub-style dot graph — darker/filled dots for days they checked in — both on the member's own <strong>Attendance</strong> tab and on the admin's member-detail view (Members → open a member → Attendance tab). Admin can still manually toggle any day below the graph if needed.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">If the printed QR code is ever lost, stolen, or you just want a fresh one, click <strong>Regenerate</strong> in the Check-in QR popup — the old printed copy stops working immediately and you print the new one.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="gym-pass">
+          <h3><span class="material-symbols-rounded">badge</span> Digital gym pass</h3>
+          <div class="body" style="margin-bottom:14px;">Every member has a digital membership card showing their photo, member ID, plan, expiry, batch, and trainer — plus its own QR code for quick front-desk verification.</div>
+          <div class="man-step"><div class="num">1</div><div class="txt">Members see their own pass via the <strong>Gym Pass</strong> button on their dashboard. Admin can open any member's pass from Members → open a member → <strong>Gym Pass</strong> button in the Overview tab.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">The <strong>Print / Save</strong> button on the pass page opens the browser's print dialog — members can save it as a PDF or print a physical copy.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">Scanning the QR code on the pass (with any phone camera, no app needed) opens a simple verification page showing whether that member is currently <strong>Active</strong> or <strong>Expired</strong> — handy for front desk staff to double check someone's pass at a glance.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="staff-permissions">
+          <h3><span class="material-symbols-rounded">badge</span> Staff &amp; permissions</h3>
+          <div class="body" style="margin-bottom:14px;">
+            Admin sees and can do everything, always. Everyone else — a front-desk <strong>Staff</strong> account, or a <strong>Trainer</strong> given extras — only sees and can use exactly what's checked for them. Anything not checked is completely hidden from their screen and blocked on the server even if they somehow guessed the URL.
+          </div>
+          <div class="man-step"><div class="num">1</div><div class="txt">Trainers &amp; PT page → <strong>Staff</strong> tab (only admin sees this tab) → <strong>Add Staff</strong>. Fill in name, email, phone, a temporary password, and tick which features they get.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">Right after creating them, a popup offers <strong>"Send Login Credentials on WhatsApp"</strong> — same as for a new member — so their email + password go straight to their own phone, no need to read it out or type it in for them.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">The default for a new staff account is exactly the front-desk basics: <strong>Add & manage members</strong>, <strong>Manage batches</strong>, <strong>Attendance & check-in QR</strong>. Nothing about money — revenue, payments, expenses, or the Monthly Profit Split — is ever included by default; tick those yourself only if you actually want a staff member seeing that.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">A staff account logs in like anyone else and lands on the same Admin Dashboard — it's just permission-filtered: the top nav bar and the dashboard's own tabs (Overview, Members, Notifications, Finance) only show what they're allowed to touch. A staff member with only the defaults sees just a Members tab — no Overview stats, no Finance, no Reports link, no Enquiries/Admissions/Trainers/Expenses in the nav.</div></div>
+          <div class="man-step"><div class="num">5</div><div class="txt">You can also grant a <strong>trainer</strong> extra permissions the same way — Trainers page → edit a trainer → <strong>Extra Permissions</strong> section near the bottom. For example, ticking <strong>Add & manage members</strong> and <strong>PT packages & assignments</strong> lets that trainer create a new member or set up a PT assignment themselves, without asking admin — an "Add / Manage Members" shortcut then appears in their Trainer Portal header.</div></div>
+          <div class="man-step"><div class="num">6</div><div class="txt">Change what a staff account can do any time — Staff tab → <strong>Edit</strong> → re-tick the boxes → <strong>Save Changes</strong>. Takes effect immediately, no need for them to log out and back in.</div></div>
+          <div class="man-step"><div class="num">7</div><div class="txt">Creating accounts, deleting them, and changing what they're allowed to do always stays admin-only — a staff or trainer account can never grant itself (or anyone else) more access, even if you've given them "Add & manage trainers."</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="add-trainer">
+          <h3><span class="material-symbols-rounded">sports</span> Adding a trainer</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">Admin Dashboard → <strong>Trainers</strong> tab → <strong>Add Trainer</strong> button.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">Fill in their name, email, phone, specialization, Instagram handle, bio, qualifications, and achievements — these can be shown on their public profile. Upload a photo and a certificate if you have them.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">If this trainer is a <strong>business partner</strong> who keeps 100% of their own personal-training revenue (instead of the usual gym split), tick <strong>"Partner trainer"</strong>.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">Set a temporary password and click <strong>Create Trainer</strong>.</div></div>
+          <div class="man-step"><div class="num">5</div><div class="txt">How a normal (non-partner) trainer's commission works — this is <strong>automatic</strong>, you never set a rate by hand:
+            <ul style="margin-top:6px;">
+              <li>10 or more active PT clients this month → trainer keeps <strong>60%</strong> of their PT revenue, gym keeps 40%.</li>
+              <li>Fewer than 10 active clients → trainer keeps <strong>50%</strong>, gym keeps 50%.</li>
+              <li>The same 50%/60% split also applies to membership revenue they bring in through admissions.</li>
+              <li>A trainer flagged <strong>Partner</strong> always keeps 100% of their own PT revenue, no matter how many clients they have.</li>
+            </ul>
+          </div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="pt">
+          <h3><span class="material-symbols-rounded">fitness_center</span> Setting up Personal Training for a client</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">Trainers page → <strong>PT Packages</strong> tab → <strong>Add PT Package</strong> if you don't already have one — just a name, price, and validity in days. (There's no "sessions" count to manage — clients train by walking in, not by booking scheduled sessions.)</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt"><strong>PT Assignments</strong> tab → <strong>New Assignment</strong>. Search for the <strong>existing member</strong> by name (they must already have an account — see "Adding a new member" above if not), pick the trainer and package, confirm the price, and save.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">That client now appears in the trainer's own Trainer Portal under "My Clients," where the trainer can set their workout and diet plans.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">To end an assignment early, click <strong>Cancel</strong> on that row in PT Assignments — this also automatically removes that assignment's payment from your revenue figures everywhere (Finance, Trainers, Reports), so the numbers stay accurate without any extra step. See "Cancellations & Refunds" below for exactly how that works.</div></div>
+          <div class="man-step"><div class="num">5</div><div class="txt">To permanently remove a package from the catalog (not just hide it), use <strong>Delete</strong> on the package card — this is a real delete, it won't reappear.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="cancellations">
+          <h3><span class="material-symbols-rounded">undo</span> Cancellations &amp; refunds</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">Cancelling a PT assignment (Trainers → PT Assignments → <strong>Cancel</strong>) marks its payment as <strong>Refunded</strong> instead of leaving it counted as revenue — you'll see it in Finance → Recent Payments with a "refunded" status if you filter for it, but it no longer adds to any revenue total (Finance, Trainers page, Reports, Monthly Profit Split — all of them).</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">This is automatic — you don't need to manually delete or adjust any payment record when you cancel an assignment. If you're checking whether a cancellation "took," the fastest place to look is the trainer's PT revenue figure on the <strong>Trainers</strong> page or the <strong>Gym Revenue</strong> card in Finance; both update immediately.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">Deleting a PT assignment entirely (rather than cancelling it) removes the record outright rather than marking it refunded — prefer <strong>Cancel</strong> for anything that actually happened and was later called off, so there's still a record of it.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="renew">
+          <h3><span class="material-symbols-rounded">autorenew</span> Renewing an expired (or expiring) membership</h3>
+          <div class="body" style="margin-bottom:14px;">Two ways to do this — use whichever fits the moment:</div>
+          <div class="man-step"><div class="num">1</div><div class="txt"><strong>From Admissions</strong> (best when the member is in front of you paying): Admissions page → search the member → choose <strong>"Renewal"</strong> instead of "New Membership" → pick the plan → record the payment. Their subscription expiry date extends automatically.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt"><strong>From Finance</strong> (quick, no need to leave the Finance tab): Admin Dashboard → Finance → <strong>Record Payment</strong> → pick the member and plan → leave <strong>"Also extend subscription"</strong> checked. Their expiry date rolls forward by the plan's duration automatically.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt"><strong>Reminding them before it expires:</strong> Admin Dashboard → Notifications tab → <strong>Membership Renewal</strong> card. Search the member, see their exact days-remaining, write your own message, and send — the days-remaining line is added to the message automatically so you never have to calculate it by hand.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="enquiries">
+          <h3><span class="material-symbols-rounded">forum</span> Handling enquiries from the public website</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">When someone submits <strong>Book a Visit</strong> or <strong>Contact</strong> on the public site, it shows up in Admin Dashboard → <strong>Enquiries</strong> — no one needs to check email for these.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">The Book a Visit form collects name, phone, an optional <strong>WhatsApp number</strong> (only asked for if it's different from their phone — most people just tick "same as phone"), a fitness goal, preferred trainer/date/time, and which <strong>membership plan</strong> they're interested in. The plan dropdown on the public site is pulled live from the same plans you manage under Finance → Subscription Plans — add or change a plan there and the enquiry form picks it up automatically.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">In the Contact column, a WhatsApp number only shows up when it's actually different from the phone number — if they're the same, you just see the one number. The Details column shows which plan they said they're interested in, right alongside their goal and preferred trainer/date.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">Move each one through its status as you work it: <strong>New → Contacted → Confirmed → Completed</strong> (or Cancelled if it doesn't work out).</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="trainer-side">
+          <h3><span class="material-symbols-rounded">groups</span> For trainers: managing your clients</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">Trainer Portal → <strong>Clients</strong> tab shows everyone currently assigned to you, with their sessions/attendance summary.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">Open a client → <strong>Workout Plan</strong> tab → <strong>Edit Workout Plan</strong> to build their weekly split. Once saved, a <strong>"Send on WhatsApp"</strong> button appears — one tap sends the whole plan to their phone.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">Same for <strong>Nutrition Plan</strong> — build their meal plan, then send it on WhatsApp the same way.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt"><strong>Working Hours</strong> tab lets you set your weekly availability and block off exceptions (time off, etc).</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="whatsapp">
+          <h3><span class="material-symbols-rounded">chat</span> WhatsApp messages, receipts &amp; PDF invoices</h3>
+          <div class="body" style="margin-bottom:10px;">Everywhere you see a WhatsApp button, one of two things happens when you click it:</div>
+          <ul style="margin-bottom:16px;">
+            <li>If a real WhatsApp Business API is connected, the message (and PDF invoice, for receipts) sends immediately — no further action needed.</li>
+            <li>Otherwise (the default), it opens a WhatsApp chat with the message already typed out — you just hit Send yourself.</li>
+          </ul>
+          <div class="man-step"><div class="num">1</div><div class="txt"><strong>Payment receipts / PDF invoices</strong> — Finance tab → Recent Payments table → the receipt icon on any row generates a real PDF invoice and sends it on WhatsApp (as an attached file when the Business API is connected, or as a download link in the message otherwise). The document icon next to it opens/downloads the same PDF directly, without sending anything. Works for membership, PT, and admission payments alike, since they're all recorded in the same place.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt"><strong>Daily Quote</strong> — Notifications tab → write or shuffle a quote → <strong>Send to Active Members</strong> gives you a one-tap send button per active member.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt"><strong>Message the Gym Group</strong> — Notifications tab → write anything → <strong>Copy Message</strong>, then paste it into your gym's WhatsApp group yourself. (WhatsApp has no way to pre-fill a message into an existing group from a link, so this is the fastest reliable way to do it.)</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="money">
+          <h3><span class="material-symbols-rounded">payments</span> Understanding the money screens</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt"><strong>Gym Revenue (Finance tab)</strong> — membership/admission fees only, kept separate from personal-training revenue, so you always know what the gym floor itself is earning.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt"><strong>Trainers page</strong> — each trainer's card shows their PT revenue and current commission rate (auto-computed from their client count, or "Partner · 100%").</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt"><strong>Reports → Monthly Profit Split</strong> — every month's total revenue minus total expenses (net profit), split 50/50 between the company and the partner trainer. The table below it keeps a running history of every month so far.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt"><strong>Reports → Trends &amp; Analytics</strong> — line charts for Revenue vs Expenses, Net Profit, New Members Joined, and Total Check-ins, one point per month, so you can see whether the gym is actually growing month to month instead of just reading one month's numbers in isolation.</div></div>
+        </div>
+
+        <div class="card man-section mt-24" id="daily">
+          <h3><span class="material-symbols-rounded">checklist</span> Daily checklist for the front desk</h3>
+          <div class="man-step"><div class="num">1</div><div class="txt">Check <strong>Enquiries</strong> for new Book Visit / Contact submissions and follow up.</div></div>
+          <div class="man-step"><div class="num">2</div><div class="txt">Check <strong>Notifications → Subscription Watch</strong> for anyone expiring soon and send reminders.</div></div>
+          <div class="man-step"><div class="num">3</div><div class="txt">When someone joins or renews: create/renew their account, take payment, send the WhatsApp receipt.</div></div>
+          <div class="man-step"><div class="num">4</div><div class="txt">Log any cash purchases under <strong>Expenses</strong> so the profit numbers stay accurate.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script>
+    (async function () {
+      if (!Auth.token) { location.href = '/'; return; }
+      let me;
+      try { me = await api('/api/me'); } catch { location.href = '/'; return; }
+      if (me.role !== 'admin' && me.role !== 'trainer' && me.role !== 'staff') { location.href = '/profile.html'; return; }
+      document.getElementById('user-chip').innerHTML = `
+        <div class="avatar admin">${initials(me.name)}</div>
+        <span>${me.name}</span>
+        ${me.role === 'admin' ? '<span class="chip primary">Admin</span>' : me.role === 'trainer' ? '<span class="chip">Trainer</span>' : '<span class="chip">Staff</span>'}
+      `;
+      if (me.role === 'admin' || me.role === 'staff') renderAdminNav('manual', me);
+    })();
+  </script>
+</body>
+</html>

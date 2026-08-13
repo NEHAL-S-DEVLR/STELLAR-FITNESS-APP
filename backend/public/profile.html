@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — My Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <button class="bell-btn" id="bell-btn" title="Notifications">
+        <span class="material-symbols-rounded">notifications</span>
+        <span class="count" id="bell-count" style="display: none;">0</span>
+      </button>
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="notif-panel" id="notif-panel">
+    <h4>
+      <span>Notifications</span>
+      <button class="btn btn-text sm" id="mark-all-read">Mark all read</button>
+    </h4>
+    <div id="notif-list"></div>
+  </div>
+
+  <div class="container">
+    <div class="flex between">
+      <div>
+        <h1 class="display" id="welcome-line">Hey.</h1>
+        <div class="body" id="date-line"></div>
+      </div>
+      <div class="flex gap">
+        <a class="btn btn-tonal lg" href="/gym-pass.html">
+          <span class="material-symbols-rounded">badge</span> Gym Pass
+        </a>
+        <button class="btn btn-filled lg" id="check-in-btn">
+          <span class="material-symbols-rounded">fitness_center</span> Check in
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid cols-4 mt-24">
+      <div class="stat">
+        <div class="lbl">Current Weight</div>
+        <div class="num" id="stat-weight">—</div>
+        <div class="sub delta" id="stat-weight-delta">—</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">BMI</div>
+        <div class="num" id="stat-bmi">—</div>
+        <div class="sub" id="stat-bmi-cat">—</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Attendance (30d)</div>
+        <div class="num" id="stat-attendance">—</div>
+        <div class="sub" id="stat-attendance-sub">—</div>
+      </div>
+      <div class="sub-card">
+        <div class="lbl">Subscription</div>
+        <div class="plan" id="sub-plan-name">—</div>
+        <div class="countdown" id="sub-countdown">—</div>
+        <div class="dates" id="sub-dates">—</div>
+      </div>
+    </div>
+
+    <div class="tabs mt-24">
+      <div class="tab active" data-tab="today"><span class="material-symbols-rounded">today</span>Today</div>
+      <div class="tab" data-tab="workout"><span class="material-symbols-rounded">exercise</span>Workout</div>
+      <div class="tab" data-tab="nutrition"><span class="material-symbols-rounded">restaurant</span>Nutrition</div>
+      <div class="tab" data-tab="progress"><span class="material-symbols-rounded">trending_up</span>Progress</div>
+      <div class="tab" data-tab="photos"><span class="material-symbols-rounded">photo_library</span>Photos</div>
+      <div class="tab" data-tab="attendance"><span class="material-symbols-rounded">event_available</span>Attendance</div>
+      <div class="tab" data-tab="book"><span class="material-symbols-rounded">event</span>Book PT Session</div>
+      <div class="tab" data-tab="finance"><span class="material-symbols-rounded">payments</span>Finance</div>
+      <div class="tab" data-tab="account"><span class="material-symbols-rounded">manage_accounts</span>Account</div>
+    </div>
+
+    <!-- Today -->
+    <div class="tab-panel active" id="panel-today">
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="material-symbols-rounded">fitness_center</span>Today's Workout</h2>
+            <span class="chip primary" id="today-day-pill"></span>
+          </div>
+          <div id="today-workout"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2><span class="material-symbols-rounded">nutrition</span>Today's Nutrition</h2>
+            <span class="chip success" id="today-cal-pill"></span>
+          </div>
+          <div id="today-nutrition"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workout -->
+    <div class="tab-panel" id="panel-workout">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 id="plan-name">—</h2>
+            <div class="body mt-12" id="plan-meta"></div>
+          </div>
+        </div>
+        <div class="grid cols-3" id="week-grid"></div>
+      </div>
+    </div>
+
+    <!-- Nutrition -->
+    <div class="tab-panel" id="panel-nutrition">
+      <div class="card">
+        <div class="card-header"><h2>Daily Nutrition Plan</h2></div>
+        <div class="macros" id="macros"></div>
+        <div id="meal-list"></div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="tab-panel" id="panel-progress">
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-header"><h2>Weight Trend</h2></div>
+          <canvas id="weight-chart" height="180"></canvas>
+        </div>
+        <div class="card">
+          <h2>Log new weight</h2>
+          <div class="form-row cols-2 mt-18">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" id="weight-date" />
+            </div>
+            <div class="field">
+              <label>Weight (kg)</label>
+              <input type="number" step="0.1" id="weight-kg" placeholder="75.5" />
+            </div>
+          </div>
+          <button class="btn btn-filled" id="log-weight-btn">
+            <span class="material-symbols-rounded">add</span> Save weight
+          </button>
+
+          <div class="section-title">History</div>
+          <table>
+            <thead><tr><th>Date</th><th>Weight (kg)</th><th></th></tr></thead>
+            <tbody id="weight-history"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:24px;">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">fitness_center</span>Workout Progress</h2>
+          <span class="chip" id="workout-log-count"></span>
+        </div>
+        <div id="muscle-group-progress" class="grid cols-3" style="margin-bottom:20px;"></div>
+        <div class="section-title" style="margin-bottom:12px;">Recent Sessions</div>
+        <div id="workout-log-history"></div>
+      </div>
+    </div>
+
+    <!-- Photos -->
+    <div class="tab-panel" id="panel-photos">
+      <div class="card">
+        <div class="card-header">
+          <h2>Progress Photos</h2>
+          <button class="btn btn-tonal sm" id="add-photo-btn">
+            <span class="material-symbols-rounded">add_a_photo</span> Add photo
+          </button>
+        </div>
+        <div class="photo-grid" id="photo-grid"></div>
+      </div>
+    </div>
+
+    <!-- Finance -->
+    <div class="tab-panel" id="panel-finance">
+      <div class="grid cols-2">
+        <div class="card sub-card">
+          <div class="lbl">My Current Plan</div>
+          <div class="plan" id="fin-my-plan">—</div>
+          <div class="countdown" id="fin-my-countdown">—</div>
+          <div class="dates" id="fin-my-dates">—</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Total Paid</h2></div>
+          <div style="font-size: 36px; font-weight: 700; letter-spacing: -0.5px; color: var(--md-primary);" id="fin-total">₹0</div>
+          <div class="body mt-12" id="fin-total-sub">Since you joined</div>
+          <div class="section-title">Pending</div>
+          <div id="fin-pending-me"></div>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">local_offer</span>Available Plans</h2>
+          <span class="chip">Tap a plan to request renewal</span>
+        </div>
+        <div id="fin-plans" class="grid cols-2"></div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header"><h2><span class="material-symbols-rounded">receipt_long</span>Payment History</h2></div>
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Plan</th><th>Amount</th><th>Method</th><th>Status</th><th>Reference</th></tr>
+          </thead>
+          <tbody id="fin-history-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Account -->
+    <div class="tab-panel" id="panel-account">
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-header"><h2><span class="material-symbols-rounded">badge</span>Profile</h2></div>
+          <div id="account-error" class="error-banner"></div>
+          <div class="form-row cols-2">
+            <div class="field"><label>Name</label><input type="text" id="acc-name" /></div>
+            <div class="field"><label>Phone (WhatsApp)</label><input type="text" id="acc-phone" placeholder="+91 98765 43210" /></div>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="acc-email" />
+          </div>
+          <div class="form-row cols-2">
+            <div class="field"><label>Goal</label><input type="text" id="acc-goal" /></div>
+            <div class="field"><label>Height (cm)</label><input type="number" id="acc-height" /></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-filled" id="acc-save">
+              <span class="material-symbols-rounded">save</span>Save changes
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h2><span class="material-symbols-rounded">lock</span>Change password</h2></div>
+          <div id="pw-error" class="error-banner"></div>
+          <div class="field">
+            <label>Current password</label>
+            <input type="password" id="pw-current" autocomplete="current-password" />
+          </div>
+          <div class="field">
+            <label>New password <span class="muted" style="font-weight: 400;">(6+ characters)</span></label>
+            <input type="password" id="pw-new" autocomplete="new-password" />
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-filled" id="pw-save">
+              <span class="material-symbols-rounded">key</span>Update password
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-24">
+        <div class="card-header"><h2><span class="material-symbols-rounded">history</span>Recent Changes</h2></div>
+        <div class="body" style="margin-bottom: 14px;">
+          Every change to your account is recorded here. Admins can also see this log.
+        </div>
+        <div id="account-history"></div>
+      </div>
+    </div>
+
+    <!-- Attendance -->
+    <div class="tab-panel" id="panel-attendance">
+      <div class="card">
+        <div class="card-header">
+          <h2>Attendance</h2>
+          <span class="chip" id="attendance-count"></span>
+        </div>
+        <div style="overflow-x:auto; padding:4px 0;">
+          <div id="attendance-heatmap"></div>
+        </div>
+        <div class="body mt-18" style="font-size: 12px;">
+          Each square is one day, most recent on the right. Filled squares are days you checked in.
+        </div>
+      </div>
+    </div>
+
+    <!-- Book PT Session -->
+    <div class="tab-panel" id="panel-book">
+      <div id="book-no-trainer" class="card" style="display:none;">
+        <div class="body">You don't have a trainer assigned yet. Speak to the front desk to get set up with a personal trainer.</div>
+      </div>
+
+      <div id="book-content" style="display:none;">
+        <div class="grid cols-2">
+          <div class="stat tinted">
+            <div class="lbl">Your Trainer</div>
+            <div class="num" id="book-trainer-name" style="font-size:22px;">—</div>
+            <div class="sub" id="book-trainer-spec">—</div>
+            <div class="sub" id="book-trainer-hours" style="margin-top:6px; display:none;">
+              <span class="material-symbols-rounded" style="font-size:14px; vertical-align:-2px;">event_available</span>
+              <span id="book-trainer-hours-text"></span>
+            </div>
+            <div class="sub" id="book-no-hours" style="margin-top:6px; display:none; color:var(--md-warning);">
+              Your trainer hasn't set their availability yet — check back soon.
+            </div>
+          </div>
+          <div class="stat">
+            <div class="lbl">Sessions Remaining</div>
+            <div class="num" id="book-remaining">—</div>
+            <div class="sub">Booking uses 1 credit</div>
+          </div>
+        </div>
+
+        <div class="card mt-24">
+          <div class="card-header"><h2><span class="material-symbols-rounded">calendar_month</span>Pick a Date</h2></div>
+          <div id="book-calendar"></div>
+        </div>
+
+        <div class="card mt-24" id="book-slots-card" style="display:none;">
+          <div class="card-header">
+            <h2>Available Times — <span id="book-slots-date">—</span></h2>
+          </div>
+          <div id="book-slots" class="flex gap" style="flex-wrap:wrap;"></div>
+        </div>
+
+        <div class="card mt-24">
+          <div class="card-header">
+            <h2><span class="material-symbols-rounded">event_available</span>My Bookings</h2>
+          </div>
+          <div class="tabs" style="margin-bottom:16px;">
+            <div class="tab active" data-btab="upcoming">Upcoming</div>
+            <div class="tab" data-btab="past">Past</div>
+          </div>
+          <div id="book-list-upcoming"></div>
+          <div id="book-list-past" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm booking modal -->
+  <div class="modal-backdrop" id="confirm-booking-modal">
+    <div class="modal" style="max-width:440px;">
+      <h3>Confirm Booking</h3>
+      <div class="body" id="cb-summary" style="margin-bottom:20px;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('confirm-booking-modal')">Cancel</button>
+        <button class="btn btn-filled" id="cb-confirm">
+          <span class="material-symbols-rounded">check</span>Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check-in modal -->
+  <div class="modal-backdrop" id="checkin-modal">
+    <div class="modal" style="max-width:540px;">
+      <div class="flex between" style="margin-bottom:20px;">
+        <div>
+          <h3 style="margin:0;" id="ci-title">Check In</h3>
+          <div class="body" id="ci-subtitle"></div>
+        </div>
+        <button class="btn btn-text icon" onclick="closeModal('checkin-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+
+      <div class="field" style="margin-bottom:20px;">
+        <label>Today's Weight (kg) — optional</label>
+        <input type="text" inputmode="decimal" id="ci-weight" placeholder="e.g. 75.5"
+               oninput="this.value=this.value.replace(/[^0-9.]/g,'')" style="max-width:180px;" />
+      </div>
+
+      <div id="ci-workout-section">
+        <div class="section-title" style="margin-bottom:10px;" id="ci-workout-label">Today's Workout</div>
+        <div id="ci-exercises"></div>
+      </div>
+
+      <div class="modal-actions" style="margin-top:20px;">
+        <button class="btn btn-text" onclick="closeModal('checkin-modal')">Cancel</button>
+        <button class="btn btn-filled" id="ci-save">
+          <span class="material-symbols-rounded">fitness_center</span><span id="ci-btn-label">Check In &amp; Save</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add photo modal -->
+  <div class="modal-backdrop" id="photo-modal">
+    <div class="modal">
+      <h3>Add a progress photo</h3>
+
+      <div class="auth-toggle" style="margin: 12px 0 20px;">
+        <button type="button" id="photo-tab-upload" class="active">Upload from device</button>
+        <button type="button" id="photo-tab-url">Paste URL</button>
+      </div>
+
+      <div id="photo-upload-form">
+        <div class="field">
+          <label>Choose image (max 8 MB)</label>
+          <input type="file" id="photo-file" accept="image/*" />
+        </div>
+        <div id="photo-preview" style="display: none; margin-bottom: 14px;">
+          <img id="photo-preview-img" style="max-width: 100%; max-height: 240px; border-radius: 12px; display: block;" />
+        </div>
+      </div>
+
+      <div id="photo-url-form" style="display: none;">
+        <div class="field">
+          <label>Image URL</label>
+          <input type="text" id="photo-url" placeholder="https://…" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Caption</label>
+        <input type="text" id="photo-caption" placeholder="Six weeks in" />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('photo-modal')">Cancel</button>
+        <button class="btn btn-filled" id="photo-save">
+          <span class="material-symbols-rounded">save</span> Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/profile.js"></script>
+</body>
+</html>

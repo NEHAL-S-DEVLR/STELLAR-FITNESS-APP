@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Trainers & PT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="flex between" style="margin-bottom: 24px;">
+      <div>
+        <h1 class="display">Trainers &amp; PT</h1>
+        <div class="body">Manage personal trainers, PT packages, and client assignments.</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-ttab="trainers">
+        <span class="material-symbols-rounded">sports</span>Trainers
+      </div>
+      <div class="tab" data-ttab="packages">
+        <span class="material-symbols-rounded">inventory_2</span>PT Packages
+      </div>
+      <div class="tab" data-ttab="assignments">
+        <span class="material-symbols-rounded">assignment_ind</span>PT Assignments
+      </div>
+      <div class="tab" data-ttab="staff" id="staff-tab-btn" style="display:none;">
+        <span class="material-symbols-rounded">badge</span>Staff
+      </div>
+    </div>
+
+    <!-- ===== TRAINERS TAB ===== -->
+    <div class="tab-panel active" id="tpanel-trainers">
+      <div class="grid cols-3" style="margin-bottom: 24px;">
+        <div class="stat tinted">
+          <div class="lbl">Total Trainers</div>
+          <div class="num" id="stat-trainer-count">—</div>
+          <div class="sub">On staff</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Assigned Members</div>
+          <div class="num" id="stat-assigned-members">—</div>
+          <div class="sub">Across all PT packages</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">MTD Commission</div>
+          <div class="num" id="stat-mtd-commission">—</div>
+          <div class="sub">This month total</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">sports</span>Trainers</h2>
+          <button class="btn btn-filled" id="add-trainer-btn">
+            <span class="material-symbols-rounded">person_add</span>Add Trainer
+          </button>
+        </div>
+        <div id="trainers-grid"></div>
+      </div>
+    </div>
+
+    <!-- ===== PT PACKAGES TAB ===== -->
+    <div class="tab-panel" id="tpanel-packages">
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">inventory_2</span>PT Packages</h2>
+          <button class="btn btn-filled" id="add-package-btn">
+            <span class="material-symbols-rounded">add</span>Add Package
+          </button>
+        </div>
+        <div id="packages-grid" class="grid cols-3"></div>
+      </div>
+    </div>
+
+    <!-- ===== PT ASSIGNMENTS TAB ===== -->
+    <div class="tab-panel" id="tpanel-assignments">
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">assignment_ind</span>PT Assignments</h2>
+          <button class="btn btn-filled" id="new-assignment-btn">
+            <span class="material-symbols-rounded">add</span>New Assignment
+          </button>
+        </div>
+        <div class="filter-row" id="assignment-filters">
+          <button class="filter-chip active" data-afilter="active">
+            <span class="material-symbols-rounded" style="font-size:16px;">bolt</span>Active
+          </button>
+          <button class="filter-chip" data-afilter="">
+            <span class="material-symbols-rounded" style="font-size:16px;">list</span>All
+          </button>
+          <button class="filter-chip" data-afilter="completed">
+            <span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>Completed
+          </button>
+          <button class="filter-chip" data-afilter="cancelled">
+            <span class="material-symbols-rounded" style="font-size:16px;">cancel</span>Cancelled
+          </button>
+        </div>
+        <table id="assignments-table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Trainer</th>
+              <th>Package</th>
+              <th>Price Paid</th>
+              <th>Status</th>
+              <th>Start</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="assignments-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== STAFF TAB (admin only — front-desk / operator accounts) ===== -->
+    <div class="tab-panel" id="tpanel-staff">
+      <div class="card">
+        <div class="card-header">
+          <h2><span class="material-symbols-rounded">badge</span>Staff</h2>
+          <button class="btn btn-filled" id="add-staff-btn">
+            <span class="material-symbols-rounded">person_add</span>Add Staff
+          </button>
+        </div>
+        <div class="body" style="margin-bottom:14px;">
+          Front-desk / operator accounts — pick exactly which admin features each one can use. Anything not checked stays completely hidden and blocked for them, including revenue and reports.
+        </div>
+        <div id="staff-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADD TRAINER MODAL ===== -->
+  <div class="modal-backdrop" id="add-trainer-modal">
+    <div class="modal" style="max-height: 85vh; overflow-y: auto;">
+      <h3>Add Trainer</h3>
+      <div class="form-row cols-2">
+        <div class="field"><label>Full Name</label><input type="text" id="at-name" placeholder="e.g. Ravi Kumar" /></div>
+        <div class="field"><label>Email</label><input type="email" id="at-email" placeholder="ravi@stellarfitness.in" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Phone</label><input type="text" id="at-phone" placeholder="+91 98765 43210" /></div>
+        <div class="field"><label>Specialization</label><input type="text" id="at-spec" placeholder="e.g. Strength & Conditioning" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Instagram handle</label><input type="text" id="at-instagram" placeholder="@coachravi" /></div>
+        <div class="field"><label>Monthly Target (₹)</label><input type="number" id="at-target" placeholder="50000" /></div>
+      </div>
+      <div class="field">
+        <label>Bio</label>
+        <textarea id="at-bio" rows="2" placeholder="Short professional bio shown on their public trainer page"></textarea>
+      </div>
+      <div class="field">
+        <label>Qualifications / Certifications</label>
+        <textarea id="at-qualifications" rows="2" placeholder="One per line — e.g. NSCA-CSCS&#10;USAW Level 2"></textarea>
+      </div>
+      <div class="field">
+        <label>Achievements</label>
+        <textarea id="at-achievements" rows="2" placeholder="One per line"></textarea>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Photo</label>
+          <input type="file" id="at-photo-file" accept="image/*" />
+          <div class="body" id="at-photo-status" style="font-size:12px; margin-top:4px;"></div>
+        </div>
+        <div class="field">
+          <label>Certificate (image or PDF)</label>
+          <input type="file" id="at-cert-file" accept="image/*,application/pdf" />
+          <div class="body" id="at-cert-status" style="font-size:12px; margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="field" style="display:flex; align-items:center; gap:10px; flex-direction:row;">
+        <input type="checkbox" id="at-partner" style="width:18px; height:18px;" />
+        <label for="at-partner" style="margin:0;">Partner trainer — keeps 100% of their own PT revenue</label>
+      </div>
+      <div class="body" style="font-size:12px; margin-bottom:8px;">
+        Non-partner trainers earn a client-count-tiered PT commission automatically: 60% with 10+ active clients, 50% below that. No need to set a rate manually.
+      </div>
+      <div class="field"><label>Temporary Password</label><input type="text" id="at-password" value="trainer123" /></div>
+      <div class="section-title mt-18">Extra Permissions</div>
+      <div class="body" style="font-size:12px; margin-bottom:10px;">
+        Trainers already manage their own clients' workout/nutrition plans. Optionally grant more — e.g. so they can add a new member or set up a PT assignment themselves instead of asking admin.
+      </div>
+      <div id="at-permissions"></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('add-trainer-modal')">Cancel</button>
+        <button class="btn btn-filled" id="at-save">
+          <span class="material-symbols-rounded">person_add</span>Create Trainer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EDIT TRAINER MODAL ===== -->
+  <div class="modal-backdrop" id="edit-trainer-modal">
+    <div class="modal" style="max-height: 85vh; overflow-y: auto;">
+      <h3>Edit Trainer</h3>
+      <div class="form-row cols-2">
+        <div class="field"><label>Full Name</label><input type="text" id="et-name" /></div>
+        <div class="field"><label>Email</label><input type="email" id="et-email" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Phone</label><input type="text" id="et-phone" /></div>
+        <div class="field"><label>Specialization</label><input type="text" id="et-spec" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Instagram handle</label><input type="text" id="et-instagram" /></div>
+        <div class="field"><label>Monthly Target (₹)</label><input type="number" id="et-target" /></div>
+      </div>
+      <div class="field"><label>Bio</label><textarea id="et-bio" rows="2"></textarea></div>
+      <div class="field"><label>Qualifications / Certifications</label><textarea id="et-qualifications" rows="2"></textarea></div>
+      <div class="field"><label>Achievements</label><textarea id="et-achievements" rows="2"></textarea></div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Photo</label>
+          <input type="file" id="et-photo-file" accept="image/*" />
+          <div class="body" id="et-photo-status" style="font-size:12px; margin-top:4px;"></div>
+        </div>
+        <div class="field">
+          <label>Certificate (image or PDF)</label>
+          <input type="file" id="et-cert-file" accept="image/*,application/pdf" />
+          <div class="body" id="et-cert-status" style="font-size:12px; margin-top:4px;"></div>
+        </div>
+      </div>
+      <div class="field" style="display:flex; align-items:center; gap:10px; flex-direction:row;">
+        <input type="checkbox" id="et-partner" style="width:18px; height:18px;" />
+        <label for="et-partner" style="margin:0;">Partner trainer — keeps 100% of their own PT revenue</label>
+      </div>
+      <div class="section-title mt-18">Extra Permissions</div>
+      <div id="et-permissions"></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('edit-trainer-modal')">Cancel</button>
+        <button class="btn btn-filled" id="et-save">
+          <span class="material-symbols-rounded">save</span>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TRAINER STATS MODAL ===== -->
+  <div class="modal-backdrop" id="trainer-stats-modal">
+    <div class="modal" style="max-width:700px;">
+      <div class="flex between" style="margin-bottom: 20px;">
+        <div class="flex gap center">
+          <div class="avatar lg admin" id="ts-avatar">?</div>
+          <div>
+            <h3 id="ts-name" style="margin:0;">—</h3>
+            <div class="body" id="ts-spec">—</div>
+          </div>
+        </div>
+        <button class="btn btn-text icon" onclick="closeModal('trainer-stats-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+      <div class="grid cols-3" style="margin-bottom: 20px;">
+        <div class="stat tinted">
+          <div class="lbl">Active PT Clients</div>
+          <div class="num" id="ts-active-clients">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">New PT Assignments MTD</div>
+          <div class="num" id="ts-assignments-mtd">—</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Revenue MTD</div>
+          <div class="num" id="ts-revenue-mtd">—</div>
+        </div>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <div class="section-title">Commission Progress</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="ts-progress-bar" style="width:0%"></div>
+        </div>
+        <div class="body" id="ts-progress-label">—</div>
+      </div>
+      <div>
+        <div class="section-title">Commission This Month</div>
+        <div id="ts-commission-summary"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADD STAFF MODAL ===== -->
+  <div class="modal-backdrop" id="add-staff-modal">
+    <div class="modal" style="max-height: 85vh; overflow-y: auto;">
+      <h3>Add Staff</h3>
+      <div class="form-row cols-2">
+        <div class="field"><label>Full Name</label><input type="text" id="as-name" placeholder="e.g. Priya Sharma" /></div>
+        <div class="field"><label>Email</label><input type="email" id="as-email" placeholder="priya@stellarfitness.in" /></div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Phone</label><input type="text" id="as-phone" placeholder="+91 98765 43210" /></div>
+        <div class="field"><label>Temporary Password</label><input type="text" id="as-password" value="staff1234" /></div>
+      </div>
+      <div class="section-title mt-18">Permissions</div>
+      <div class="body" style="font-size:12px; margin-bottom:10px;">
+        Only what's checked below is visible/usable for this account — everything else (revenue, reports, other tabs) stays fully hidden and blocked.
+      </div>
+      <div id="as-permissions"></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('add-staff-modal')">Cancel</button>
+        <button class="btn btn-filled" id="as-save">
+          <span class="material-symbols-rounded">person_add</span>Create Staff
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STAFF CREATED MODAL ===== -->
+  <div class="modal-backdrop" id="staff-created-modal">
+    <div class="modal">
+      <div class="flex" style="align-items:center; gap:10px; margin-bottom:8px;">
+        <span class="material-symbols-rounded" style="color:var(--md-success); font-size:28px;">check_circle</span>
+        <h3 style="margin:0;">Staff account created</h3>
+      </div>
+      <div class="body" id="sc-summary" style="margin-bottom:16px;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('staff-created-modal')">Done</button>
+        <button class="btn btn-filled" id="sc-send-creds">
+          <span class="material-symbols-rounded">chat</span>Send Login Credentials on WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EDIT STAFF MODAL ===== -->
+  <div class="modal-backdrop" id="edit-staff-modal">
+    <div class="modal" style="max-height: 85vh; overflow-y: auto;">
+      <h3>Edit Staff</h3>
+      <div class="form-row cols-2">
+        <div class="field"><label>Full Name</label><input type="text" id="es-name" /></div>
+        <div class="field"><label>Phone</label><input type="text" id="es-phone" /></div>
+      </div>
+      <div class="section-title mt-18">Permissions</div>
+      <div id="es-permissions"></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('edit-staff-modal')">Cancel</button>
+        <button class="btn btn-filled" id="es-save">
+          <span class="material-symbols-rounded">save</span>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADD PT PACKAGE MODAL ===== -->
+  <div class="modal-backdrop" id="add-package-modal">
+    <div class="modal">
+      <h3>Add PT Package</h3>
+      <div class="field"><label>Package Name</label><input type="text" id="ap-name" placeholder="e.g. Starter PT Package" /></div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Price (₹)</label><input type="number" id="ap-price" placeholder="6000" /></div>
+        <div class="field"><label>Validity (days)</label><input type="number" id="ap-validity" placeholder="90" /></div>
+      </div>
+      <div class="field"><label>Description</label><textarea id="ap-desc" rows="3" placeholder="Brief description of what's included…"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('add-package-modal')">Cancel</button>
+        <button class="btn btn-filled" id="ap-save">
+          <span class="material-symbols-rounded">save</span>Create Package
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EDIT PT PACKAGE MODAL ===== -->
+  <div class="modal-backdrop" id="edit-package-modal">
+    <div class="modal">
+      <h3>Edit PT Package</h3>
+      <div class="field"><label>Package Name</label><input type="text" id="ep-name" /></div>
+      <div class="form-row cols-2">
+        <div class="field"><label>Price (₹)</label><input type="number" id="ep-price" /></div>
+        <div class="field"><label>Validity (days)</label><input type="number" id="ep-validity" /></div>
+      </div>
+      <div class="field"><label>Description</label><textarea id="ep-desc" rows="3"></textarea></div>
+      <div class="field">
+        <label>Status</label>
+        <select id="ep-active">
+          <option value="true">Active — available for assignment</option>
+          <option value="false">Inactive — hidden</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('edit-package-modal')">Cancel</button>
+        <button class="btn btn-filled" id="ep-save">
+          <span class="material-symbols-rounded">save</span>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== NEW PT ASSIGNMENT MODAL ===== -->
+  <div class="modal-backdrop" id="new-assignment-modal">
+    <div class="modal">
+      <h3>New PT Assignment</h3>
+      <div class="field">
+        <label>Member</label>
+        <input type="text" id="na-member-search" placeholder="Type to search member…" autocomplete="off" />
+        <div id="na-member-results" style="position:relative; z-index: 10;"></div>
+        <input type="hidden" id="na-member-id" />
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Trainer</label>
+          <select id="na-trainer">
+            <option value="">Select trainer…</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>PT Package</label>
+          <select id="na-package">
+            <option value="">Select package…</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Price Paid (₹)</label><input type="number" id="na-price" placeholder="Auto-filled from package" /></div>
+      <div class="field"><label>Start Date</label><input type="date" id="na-start" /></div>
+      <div class="field"><label>Remarks</label><textarea id="na-remarks" rows="2" placeholder="Optional notes…"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('new-assignment-modal')">Cancel</button>
+        <button class="btn btn-filled" id="na-save">
+          <span class="material-symbols-rounded">assignment_add</span>Create Assignment
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script src="/trainers.js"></script>
+</body>
+</html>

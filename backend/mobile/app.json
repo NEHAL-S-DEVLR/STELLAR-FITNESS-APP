@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Stellar Fitness Club",
+    "slug": "stellar-fitness-club",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#191113",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "splash": {
+      "backgroundColor": "#191113",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stellarfitnessclub.app",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        },
+        "NSCameraUsageDescription": "Used to scan the gym's check-in QR code and member verification codes."
+      }
+    },
+    "android": {
+      "package": "com.stellarfitnessclub.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#7C2E10"
+      },
+      "usesCleartextTraffic": true,
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Used to scan the gym's check-in QR code and member verification codes."
+        }
+      ]
+    ]
+  }
+}

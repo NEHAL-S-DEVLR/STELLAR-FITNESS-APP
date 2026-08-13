@@ -1,0 +1,6 @@
+node_modules/
+.env
+*.log
+gym.db*
+public/uploads/*
+!public/uploads/.gitkeep
