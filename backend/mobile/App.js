@@ -31,6 +31,11 @@ import TrainerEarningsScreen from './src/screens/TrainerEarningsScreen';
 import AdminMembersScreen from './src/screens/AdminMembersScreen';
 import AdminAddMemberScreen from './src/screens/AdminAddMemberScreen';
 import AdminMemberDetailScreen from './src/screens/AdminMemberDetailScreen';
+import AdminDashboardScreen from './src/screens/AdminDashboardScreen';
+import AdminBatchesScreen from './src/screens/AdminBatchesScreen';
+import AdminEnquiriesScreen from './src/screens/AdminEnquiriesScreen';
+import AdminExpensesScreen from './src/screens/AdminExpensesScreen';
+import AdminCheckinQrScreen from './src/screens/AdminCheckinQrScreen';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -82,6 +87,10 @@ export default function App() {
             <RootStack.Screen name="AdminAddMember" component={AdminAddMemberScreen} options={{ presentation: 'modal', headerShown: true, title: 'Add Member' }} />
             <RootStack.Screen name="TrainerClientDetail" component={TrainerClientDetailScreen} options={{ headerShown: true, title: '' }} />
             <RootStack.Screen name="AdminMemberDetail" component={AdminMemberDetailScreen} options={{ headerShown: true, title: '' }} />
+            <RootStack.Screen name="AdminBatches" component={AdminBatchesScreen} options={{ headerShown: true, title: 'Batches' }} />
+            <RootStack.Screen name="AdminEnquiries" component={AdminEnquiriesScreen} options={{ headerShown: true, title: 'Enquiries' }} />
+            <RootStack.Screen name="AdminExpenses" component={AdminExpensesScreen} options={{ headerShown: true, title: 'Expenses' }} />
+            <RootStack.Screen name="AdminCheckinQr" component={AdminCheckinQrScreen} options={{ headerShown: true, title: 'Check-in QR' }} />
           </RootStack.Navigator>
         ) : (
           <LoginScreen onSignedIn={() => setSignedIn(true)} />
@@ -202,6 +211,7 @@ function TrainerTabs({ user, onLogout }) {
 function AdminTabs({ user, onLogout }) {
   return (
     <Tab.Navigator screenOptions={tabOptions}>
+      <Tab.Screen name="Dashboard" component={AdminDashboardScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="grid" size={22} color={color} /> }} />
       <Tab.Screen name="Members" component={AdminMembersScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} /> }} />
       <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
         {() => <SimpleAccountScreen user={user} onLogout={onLogout} />}
