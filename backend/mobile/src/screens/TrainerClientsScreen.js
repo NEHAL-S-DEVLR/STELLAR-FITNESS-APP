@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Chip, Empty } from '../components/Common';
 import { colors, radius, spacing } from '../theme';
@@ -7,7 +7,7 @@ import { api } from '../api';
 
 const STATUS_TONE = { active: 'success', completed: 'default', cancelled: 'error' };
 
-export default function TrainerClientsScreen() {
+export default function TrainerClientsScreen({ navigation }) {
   const [clients, setClients] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -45,19 +45,26 @@ export default function TrainerClientsScreen() {
           : <Empty icon={<Ionicons name="people-outline" size={30} color={colors.outline} />} text="No clients assigned yet." />
       }
       renderItem={({ item }) => (
-        <Card style={{ marginBottom: 10 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.sub}>{item.package_name || 'No package'}</Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('TrainerClientDetail', {
+            clientId: item.id, clientName: item.name, status: item.assignment_status, packageName: item.package_name,
+          })}
+        >
+          <Card style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.sub}>{item.package_name || 'No package'}</Text>
+              </View>
+              <Chip label={item.assignment_status || '—'} tone={STATUS_TONE[item.assignment_status] || 'default'} />
             </View>
-            <Chip label={item.assignment_status || '—'} tone={STATUS_TONE[item.assignment_status] || 'default'} />
-          </View>
-          <View style={{ flexDirection: 'row', gap: 16, marginTop: 10 }}>
-            <Text style={styles.stat}>{item.attendance_30d ?? 0} check-ins (30d)</Text>
-            {item.last_weight_kg ? <Text style={styles.stat}>{Number(item.last_weight_kg).toFixed(1)} kg</Text> : null}
-          </View>
-        </Card>
+            <View style={{ flexDirection: 'row', gap: 16, marginTop: 10 }}>
+              <Text style={styles.stat}>{item.attendance_30d ?? 0} check-ins (30d)</Text>
+              {item.last_weight_kg ? <Text style={styles.stat}>{Number(item.last_weight_kg).toFixed(1)} kg</Text> : null}
+            </View>
+          </Card>
+        </TouchableOpacity>
       )}
     />
   );

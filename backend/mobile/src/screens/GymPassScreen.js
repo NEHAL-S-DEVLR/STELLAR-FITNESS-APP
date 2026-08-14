@@ -11,13 +11,15 @@ function fmtDate(d) {
 
 const STATUS_TONE = { active: 'success', expired: 'error', inactive: 'default' };
 
-export default function GymPassScreen() {
+export default function GymPassScreen({ route }) {
+  const memberId = route?.params?.memberId;
   const [pass, setPass] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api('/api/me/gym-pass').then(setPass).catch(e => setError(e.message));
-  }, []);
+    const path = memberId ? `/api/admin/members/${memberId}/gym-pass` : '/api/me/gym-pass';
+    api(path).then(setPass).catch(e => setError(e.message));
+  }, [memberId]);
 
   if (error) {
     return (

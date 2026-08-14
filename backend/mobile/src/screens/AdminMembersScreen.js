@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, FlatList, TextInput, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TextInput, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Chip, Empty, Button } from '../components/Common';
 import { colors, radius, spacing } from '../theme';
@@ -68,20 +68,22 @@ export default function AdminMembersScreen({ navigation }) {
         const days = item.subscription ? daysUntil(item.subscription.expiryDate) : null;
         const expired = days != null && days < 0;
         return (
-          <Card style={{ marginBottom: 10 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{item.name}</Text>
-                <Text style={styles.sub}>{item.email}</Text>
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminMemberDetail', { memberId: item.id })}>
+            <Card style={{ marginBottom: 10 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.sub}>{item.email}</Text>
+                </View>
+                <Chip label={item.memberType === 'pt' ? 'PT' : 'Regular'} tone={item.memberType === 'pt' ? 'primary' : 'default'} />
               </View>
-              <Chip label={item.memberType === 'pt' ? 'PT' : 'Regular'} tone={item.memberType === 'pt' ? 'primary' : 'default'} />
-            </View>
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
-              {item.subscription
-                ? <Chip label={expired ? `Expired ${Math.abs(days)}d ago` : `${days}d left · ${item.subscription.plan}`} tone={expired ? 'error' : 'success'} />
-                : <Chip label="No subscription" tone="default" />}
-            </View>
-          </Card>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                {item.subscription
+                  ? <Chip label={expired ? `Expired ${Math.abs(days)}d ago` : `${days}d left · ${item.subscription.plan}`} tone={expired ? 'error' : 'success'} />
+                  : <Chip label="No subscription" tone="default" />}
+              </View>
+            </Card>
+          </TouchableOpacity>
         );
       }}
     />

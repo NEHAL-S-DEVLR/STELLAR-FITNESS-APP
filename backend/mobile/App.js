@@ -26,9 +26,11 @@ import SimpleAccountScreen from './src/screens/SimpleAccountScreen';
 import CheckInScreen from './src/screens/CheckInScreen';
 import GymPassScreen from './src/screens/GymPassScreen';
 import TrainerClientsScreen from './src/screens/TrainerClientsScreen';
+import TrainerClientDetailScreen from './src/screens/TrainerClientDetailScreen';
 import TrainerEarningsScreen from './src/screens/TrainerEarningsScreen';
 import AdminMembersScreen from './src/screens/AdminMembersScreen';
 import AdminAddMemberScreen from './src/screens/AdminAddMemberScreen';
+import AdminMemberDetailScreen from './src/screens/AdminMemberDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -78,6 +80,8 @@ export default function App() {
             <RootStack.Screen name="CheckIn" component={CheckInScreen} options={{ presentation: 'fullScreenModal' }} />
             <RootStack.Screen name="GymPass" component={GymPassScreen} options={{ presentation: 'modal', headerShown: true, title: 'Gym Pass' }} />
             <RootStack.Screen name="AdminAddMember" component={AdminAddMemberScreen} options={{ presentation: 'modal', headerShown: true, title: 'Add Member' }} />
+            <RootStack.Screen name="TrainerClientDetail" component={TrainerClientDetailScreen} options={{ headerShown: true, title: '' }} />
+            <RootStack.Screen name="AdminMemberDetail" component={AdminMemberDetailScreen} options={{ headerShown: true, title: '' }} />
           </RootStack.Navigator>
         ) : (
           <LoginScreen onSignedIn={() => setSignedIn(true)} />
