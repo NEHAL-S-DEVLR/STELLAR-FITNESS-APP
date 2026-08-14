@@ -8,13 +8,15 @@ import { api } from '../api';
 const money = (v) => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
 const MENU = [
+  { key: 'AdminFinance', icon: 'cash', label: 'Finance', sub: 'Revenue, payments, receipts' },
+  { key: 'AdminTrainers', icon: 'body', label: 'Trainers & PT', sub: 'Trainers, packages, PT assignments' },
   { key: 'AdminBatches', icon: 'people', label: 'Batches', sub: 'Morning/Evening groups, capacity' },
   { key: 'AdminEnquiries', icon: 'chatbubbles', label: 'Enquiries', sub: 'Book Visit & Contact submissions' },
   { key: 'AdminCheckinQr', icon: 'qr-code', label: 'Check-in QR', sub: 'Print or regenerate the entrance code' },
   { key: 'AdminExpenses', icon: 'receipt', label: 'Expenses', sub: 'Rent, salary, maintenance, etc.' },
 ];
 
-export default function AdminDashboardScreen({ navigation }) {
+export default function AdminDashboardScreen({ navigation, isAdmin }) {
   const [dash, setDash] = useState(null);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -83,7 +85,7 @@ export default function AdminDashboardScreen({ navigation }) {
 
       <SectionTitle>Manage</SectionTitle>
       {MENU.map((item) => (
-        <TouchableOpacity key={item.key} activeOpacity={0.8} onPress={() => navigation.navigate(item.key)}>
+        <TouchableOpacity key={item.key} activeOpacity={0.8} onPress={() => navigation.navigate(item.key, { isAdmin })}>
           <Card style={{ marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={styles.menuIcon}><Ionicons name={item.icon} size={20} color={colors.primary} /></View>
             <View style={{ flex: 1 }}>

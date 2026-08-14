@@ -30,12 +30,12 @@ export function Chip({ label, tone = 'default', style }) {
 }
 
 const TONES = {
-  default: { bg: colors.surfaceHi,        border: colors.outlineVar,           fg: colors.onSurfaceVar },
-  primary: { bg: 'rgba(255,181,154,0.14)', border: 'rgba(255,181,154,0.30)',   fg: colors.primary },
-  success: { bg: 'rgba(124,219,165,0.14)', border: 'rgba(124,219,165,0.30)',   fg: colors.success },
-  warning: { bg: 'rgba(255,204,122,0.14)', border: 'rgba(255,204,122,0.30)',   fg: colors.warning },
-  error:   { bg: 'rgba(255,180,171,0.14)', border: 'rgba(255,180,171,0.30)',   fg: colors.error },
-  info:    { bg: 'rgba(168,200,255,0.14)', border: 'rgba(168,200,255,0.30)',   fg: colors.info },
+  default: { bg: colors.surfaceHi,        border: colors.outlineVar,          fg: colors.onSurfaceVar },
+  primary: { bg: 'rgba(59,130,246,0.14)',  border: 'rgba(59,130,246,0.30)',   fg: colors.primary },
+  success: { bg: 'rgba(52,211,153,0.14)',  border: 'rgba(52,211,153,0.30)',   fg: colors.success },
+  warning: { bg: 'rgba(251,191,36,0.14)',  border: 'rgba(251,191,36,0.30)',   fg: colors.warning },
+  error:   { bg: 'rgba(248,113,113,0.14)', border: 'rgba(248,113,113,0.30)',  fg: colors.error },
+  info:    { bg: 'rgba(96,165,250,0.14)',  border: 'rgba(96,165,250,0.30)',   fg: colors.info },
 };
 
 export function Button({ label, onPress, disabled, variant = 'filled', icon, style }) {
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   cardTinted: {
-    backgroundColor: 'rgba(255,181,154,0.08)',
+    backgroundColor: 'rgba(59,130,246,0.08)',
   },
   cardGradient: {
     backgroundColor: colors.primaryContainer,
