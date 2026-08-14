@@ -40,6 +40,13 @@ import AdminFinanceScreen from './src/screens/AdminFinanceScreen';
 import AdminTrainersScreen from './src/screens/AdminTrainersScreen';
 import AdminAddTrainerScreen from './src/screens/AdminAddTrainerScreen';
 import AdminNewAssignmentScreen from './src/screens/AdminNewAssignmentScreen';
+import AdminStaffScreen from './src/screens/AdminStaffScreen';
+import AdminAddStaffScreen from './src/screens/AdminAddStaffScreen';
+import AdminAdmissionsScreen from './src/screens/AdminAdmissionsScreen';
+import AdminReportsScreen from './src/screens/AdminReportsScreen';
+import TrainerWorkingHoursScreen from './src/screens/TrainerWorkingHoursScreen';
+import MemberProgressScreen from './src/screens/MemberProgressScreen';
+import MemberPaymentsScreen from './src/screens/MemberPaymentsScreen';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -99,6 +106,12 @@ export default function App() {
             <RootStack.Screen name="AdminTrainers" component={AdminTrainersScreen} options={{ headerShown: true, title: 'Trainers & PT' }} />
             <RootStack.Screen name="AdminAddTrainer" component={AdminAddTrainerScreen} options={{ presentation: 'modal', headerShown: true, title: 'Add Trainer' }} />
             <RootStack.Screen name="AdminNewAssignment" component={AdminNewAssignmentScreen} options={{ presentation: 'modal', headerShown: true, title: 'New PT Assignment' }} />
+            <RootStack.Screen name="AdminStaff" component={AdminStaffScreen} options={{ headerShown: true, title: 'Staff' }} />
+            <RootStack.Screen name="AdminAddStaff" component={AdminAddStaffScreen} options={{ presentation: 'modal', headerShown: true, title: 'Add Staff' }} />
+            <RootStack.Screen name="AdminAdmissions" component={AdminAdmissionsScreen} options={{ headerShown: true, title: 'Admissions' }} />
+            <RootStack.Screen name="AdminReports" component={AdminReportsScreen} options={{ headerShown: true, title: 'Reports' }} />
+            <RootStack.Screen name="MemberProgress" component={MemberProgressScreen} options={{ headerShown: true, title: 'Progress' }} />
+            <RootStack.Screen name="MemberPayments" component={MemberPaymentsScreen} options={{ headerShown: true, title: 'Payment History' }} />
           </RootStack.Navigator>
         ) : (
           <LoginScreen onSignedIn={() => setSignedIn(true)} />
@@ -198,7 +211,7 @@ function MemberTabs({ user, refresh, refreshing, onLogout }) {
         {() => <NotificationsScreen notifications={user.notifications || []} />}
       </Tab.Screen>
       <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
-        {() => <AccountScreen user={user} onSaved={refresh} onLogout={onLogout} baseUrl={baseUrl} />}
+        {({ navigation }) => <AccountScreen user={user} onSaved={refresh} onLogout={onLogout} baseUrl={baseUrl} navigation={navigation} />}
       </Tab.Screen>
     </Tab.Navigator>
   );
@@ -209,6 +222,7 @@ function TrainerTabs({ user, onLogout }) {
     <Tab.Navigator screenOptions={tabOptions}>
       <Tab.Screen name="Clients" component={TrainerClientsScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} /> }} />
       <Tab.Screen name="Earnings" component={TrainerEarningsScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="cash" size={22} color={color} /> }} />
+      <Tab.Screen name="Hours" component={TrainerWorkingHoursScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="time" size={22} color={color} /> }} />
       <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
         {() => <SimpleAccountScreen user={user} onLogout={onLogout} />}
       </Tab.Screen>

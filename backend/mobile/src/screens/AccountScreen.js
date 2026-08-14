@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { colors, radius, spacing } from '../theme';
 import { Button } from '../components/Common';
 import { api, Session, initials } from '../api';
 
-export default function AccountScreen({ user, onSaved, onLogout, baseUrl }) {
+export default function AccountScreen({ user, onSaved, onLogout, baseUrl, navigation }) {
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [phone, setPhone] = useState(user.phone || '');
@@ -63,24 +62,20 @@ export default function AccountScreen({ user, onSaved, onLogout, baseUrl }) {
         style={{ marginTop: 16 }}
       />
 
-      {user.photos && user.photos.length > 0 && (
-        <>
-          <Text style={styles.section}>PROGRESS PHOTOS</Text>
-          {user.photos.map(p => (
-            <View key={p.id} style={styles.photo}>
-              <Image
-                source={{ uri: p.url.startsWith('http') ? p.url : `${baseUrl}${p.url}` }}
-                style={{ width: 80, height: 80, borderRadius: 10 }}
-                contentFit="cover"
-              />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.photoCaption}>{p.caption || 'Progress'}</Text>
-                <Text style={styles.photoDate}>{p.date}</Text>
-              </View>
-            </View>
-          ))}
-        </>
-      )}
+      <Text style={styles.section}>MORE</Text>
+      <Button
+        label="Progress: Weight & Photos"
+        variant="tonal"
+        onPress={() => navigation.navigate('MemberProgress')}
+        icon={<Ionicons name="trending-up" size={18} color={colors.onPrimaryContainer} />}
+        style={{ marginBottom: 10 }}
+      />
+      <Button
+        label="Payment History"
+        variant="tonal"
+        onPress={() => navigation.navigate('MemberPayments')}
+        icon={<Ionicons name="receipt" size={18} color={colors.onPrimaryContainer} />}
+      />
 
       <Button
         label="Sign out"
@@ -137,10 +132,4 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVar, fontSize: 11, fontWeight: '700', letterSpacing: 1,
     marginTop: 26, marginBottom: 10,
   },
-  photo: {
-    flexDirection: 'row', alignItems: 'center', padding: 10,
-    backgroundColor: colors.surfaceVar, borderRadius: radius.md, marginBottom: 8,
-  },
-  photoCaption: { color: colors.onSurface, fontWeight: '600', fontSize: 13 },
-  photoDate:    { color: colors.onSurfaceVar, fontSize: 11, marginTop: 2 },
 });

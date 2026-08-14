@@ -9,11 +9,17 @@ const money = (v) => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFra
 
 const MENU = [
   { key: 'AdminFinance', icon: 'cash', label: 'Finance', sub: 'Revenue, payments, receipts' },
+  { key: 'AdminAdmissions', icon: 'document-text', label: 'Admissions', sub: 'New memberships, renewals, receipts' },
   { key: 'AdminTrainers', icon: 'body', label: 'Trainers & PT', sub: 'Trainers, packages, PT assignments' },
   { key: 'AdminBatches', icon: 'people', label: 'Batches', sub: 'Morning/Evening groups, capacity' },
   { key: 'AdminEnquiries', icon: 'chatbubbles', label: 'Enquiries', sub: 'Book Visit & Contact submissions' },
   { key: 'AdminCheckinQr', icon: 'qr-code', label: 'Check-in QR', sub: 'Print or regenerate the entrance code' },
   { key: 'AdminExpenses', icon: 'receipt', label: 'Expenses', sub: 'Rent, salary, maintenance, etc.' },
+  { key: 'AdminReports', icon: 'bar-chart', label: 'Reports', sub: 'Trends, attendance, profit split' },
+];
+
+const ADMIN_ONLY_MENU = [
+  { key: 'AdminStaff', icon: 'shield-checkmark', label: 'Staff & Permissions', sub: 'Front-desk accounts and access' },
 ];
 
 export default function AdminDashboardScreen({ navigation, isAdmin }) {
@@ -84,7 +90,7 @@ export default function AdminDashboardScreen({ navigation, isAdmin }) {
       )}
 
       <SectionTitle>Manage</SectionTitle>
-      {MENU.map((item) => (
+      {[...MENU, ...(isAdmin ? ADMIN_ONLY_MENU : [])].map((item) => (
         <TouchableOpacity key={item.key} activeOpacity={0.8} onPress={() => navigation.navigate(item.key, { isAdmin })}>
           <Card style={{ marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={styles.menuIcon}><Ionicons name={item.icon} size={20} color={colors.primary} /></View>
