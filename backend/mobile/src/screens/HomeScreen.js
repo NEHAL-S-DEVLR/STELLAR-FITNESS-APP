@@ -4,7 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Card, StatCard, Chip, Button, SectionTitle, ProgressBar, Empty } from '../components/Common';
 import Heatmap from '../components/Heatmap';
 import { colors, radius, spacing } from '../theme';
-import { bmi, bmiCategory, daysUntil } from '../api';
+import { bmi, bmiCategory, daysUntil, initials } from '../api';
 
 export default function HomeScreen({ user, foodToday, onCheckIn, onRefresh, refreshing, navigation }) {
   const todayName = new Date().toLocaleDateString(undefined, { weekday: 'long' });
@@ -61,6 +61,9 @@ export default function HomeScreen({ user, foodToday, onCheckIn, onRefresh, refr
 
       {/* Subscription card */}
       {user.subscription && <SubscriptionCard sub={user.subscription} />}
+
+      {/* Your trainer */}
+      {user.trainer && <TrainerCard trainer={user.trainer} />}
 
       {/* Attendance heatmap */}
       <SectionTitle>Attendance</SectionTitle>
@@ -153,6 +156,21 @@ function MacroPill({ label, value }) {
   );
 }
 
+function TrainerCard({ trainer }) {
+  return (
+    <View style={styles.trainerCard}>
+      <View style={styles.trainerAvatar}>
+        <Text style={styles.trainerAvatarText}>{initials(trainer.name)}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.trainerLbl}>YOUR TRAINER</Text>
+        <Text style={styles.trainerName}>{trainer.name}</Text>
+        {trainer.specialization ? <Text style={styles.trainerSpec}>{trainer.specialization}</Text> : null}
+      </View>
+    </View>
+  );
+}
+
 function SubscriptionCard({ sub }) {
   const days = daysUntil(sub.expiryDate);
   const label = days == null ? '—' :
@@ -205,8 +223,20 @@ const styles = StyleSheet.create({
     marginTop: 16, padding: 18, borderRadius: radius.lg,
     backgroundColor: colors.primaryContainer,
   },
-  subLbl:       { color: 'rgba(255,219,202,0.75)', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  subLbl:       { color: 'rgba(219,234,254,0.75)', fontSize: 10, fontWeight: '700', letterSpacing: 1 },
   subPlan:      { color: colors.onPrimaryContainer, fontSize: 17, fontWeight: '700', marginTop: 4 },
   subCountdown: { color: colors.onPrimaryContainer, fontSize: 24, fontWeight: '800' },
-  subDates:     { color: 'rgba(255,219,202,0.65)', fontSize: 12, marginTop: 2 },
+  subDates:     { color: 'rgba(219,234,254,0.65)', fontSize: 12, marginTop: 2 },
+  trainerCard: {
+    marginTop: 12, padding: 14, borderRadius: radius.lg,
+    backgroundColor: colors.surfaceVar, flexDirection: 'row', alignItems: 'center', gap: 12,
+  },
+  trainerAvatar: {
+    width: 44, height: 44, borderRadius: radius.md,
+    backgroundColor: colors.primaryContainer, alignItems: 'center', justifyContent: 'center',
+  },
+  trainerAvatarText: { color: colors.onPrimaryContainer, fontWeight: '800', fontSize: 15 },
+  trainerLbl:  { color: colors.onSurfaceVar, fontSize: 10, fontWeight: '700', letterSpacing: 1 },
+  trainerName: { color: colors.onSurface, fontSize: 15, fontWeight: '700', marginTop: 2 },
+  trainerSpec: { color: colors.onSurfaceVar, fontSize: 12, marginTop: 1 },
 });

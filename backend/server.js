@@ -1389,6 +1389,19 @@ async function fullUser(id) {
   u.attendance   = (await q('SELECT date FROM attendance WHERE user_id = $1 ORDER BY date', [id])).map(r => r.date);
   u.notifications = (await q('SELECT id, type, title, body, sent, is_read FROM notifications WHERE user_id = $1 ORDER BY sent DESC', [id]))
     .map(n => ({ id: n.id, type: n.type, title: n.title, body: n.body, sent: n.sent, read: !!n.is_read }));
+  // Resolve the assigned trainer's name/specialization/photo so the app can
+  // show "your trainer" without a second request — assignedTrainerId alone
+  // is just a number, not something worth displaying to a member.
+  if (u.assignedTrainerId) {
+    const t = await q1(
+      `SELECT name, phone, trainer_specialization AS specialization, photo_url AS "photoUrl"
+       FROM users WHERE id = $1 AND role = 'trainer'`,
+      [u.assignedTrainerId]
+    );
+    u.trainer = t || null;
+  } else {
+    u.trainer = null;
+  }
   return u;
 }
 
