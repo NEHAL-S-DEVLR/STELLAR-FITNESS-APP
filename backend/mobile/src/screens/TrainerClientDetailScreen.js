@@ -22,7 +22,12 @@ function textToItems(text) {
 }
 
 export default function TrainerClientDetailScreen({ route }) {
-  const { clientId, clientName, status, packageName } = route.params;
+  const { clientId, clientName, status, packageName, trainerId } = route.params;
+  // trainerId is only passed when an admin opens a PT client's plan from
+  // AdminMemberDetailScreen — mirrors the website's "viewing as trainer"
+  // dropdown, just auto-scoped to that member's actual assigned trainer
+  // instead of a manual picker.
+  const withTrainerParam = (path) => trainerId ? `${path}${path.includes('?') ? '&' : '?'}trainerId=${trainerId}` : path;
   const [detail, setDetail] = useState(null);
   const [error, setError] = useState(null);
 
@@ -41,7 +46,7 @@ export default function TrainerClientDetailScreen({ route }) {
   const [sendingNutrition, setSendingNutrition] = useState(false);
 
   useEffect(() => {
-    api(`/api/trainer/clients/${clientId}`)
+    api(withTrainerParam(`/api/trainer/clients/${clientId}`))
       .then((d) => {
         setDetail(d);
         const focus = {}; const text = {};
@@ -71,7 +76,7 @@ export default function TrainerClientDetailScreen({ route }) {
   async function saveWorkout() {
     setSavingWorkout(true);
     try {
-      await api(`/api/trainer/clients/${clientId}/workout`, { method: 'PUT', body: buildWorkoutPlan() });
+      await api(withTrainerParam(`/api/trainer/clients/${clientId}/workout`), { method: 'PUT', body: buildWorkoutPlan() });
       Alert.alert('Saved', 'Workout plan updated.');
     } catch (e) { Alert.alert('Could not save', e.message); } finally { setSavingWorkout(false); }
   }
@@ -80,13 +85,13 @@ export default function TrainerClientDetailScreen({ route }) {
     setSendingWorkout(true);
     try {
       await saveWorkoutSilently();
-      const res = await api(`/api/trainer/clients/${clientId}/workout/whatsapp`, { method: 'POST' });
+      const res = await api(withTrainerParam(`/api/trainer/clients/${clientId}/workout/whatsapp`), { method: 'POST' });
       if (res.mode === 'link' && res.link) Alert.alert('Open WhatsApp', 'Tap OK, then send the pre-filled message.', [{ text: 'OK' }]);
       else Alert.alert('Sent', 'Workout plan sent on WhatsApp.');
     } catch (e) { Alert.alert('Could not send', e.message); } finally { setSendingWorkout(false); }
   }
   async function saveWorkoutSilently() {
-    await api(`/api/trainer/clients/${clientId}/workout`, { method: 'PUT', body: buildWorkoutPlan() });
+    await api(withTrainerParam(`/api/trainer/clients/${clientId}/workout`), { method: 'PUT', body: buildWorkoutPlan() });
   }
 
   function buildNutritionPlan() {
@@ -105,7 +110,7 @@ export default function TrainerClientDetailScreen({ route }) {
   async function saveNutrition() {
     setSavingNutrition(true);
     try {
-      await api(`/api/trainer/clients/${clientId}/nutrition`, { method: 'PUT', body: buildNutritionPlan() });
+      await api(withTrainerParam(`/api/trainer/clients/${clientId}/nutrition`), { method: 'PUT', body: buildNutritionPlan() });
       Alert.alert('Saved', 'Nutrition plan updated.');
     } catch (e) { Alert.alert('Could not save', e.message); } finally { setSavingNutrition(false); }
   }
@@ -113,8 +118,8 @@ export default function TrainerClientDetailScreen({ route }) {
   async function sendNutrition() {
     setSendingNutrition(true);
     try {
-      await api(`/api/trainer/clients/${clientId}/nutrition`, { method: 'PUT', body: buildNutritionPlan() });
-      const res = await api(`/api/trainer/clients/${clientId}/nutrition/whatsapp`, { method: 'POST' });
+      await api(withTrainerParam(`/api/trainer/clients/${clientId}/nutrition`), { method: 'PUT', body: buildNutritionPlan() });
+      const res = await api(withTrainerParam(`/api/trainer/clients/${clientId}/nutrition/whatsapp`), { method: 'POST' });
       if (res.mode === 'link' && res.link) Alert.alert('Open WhatsApp', 'Tap OK, then send the pre-filled message.', [{ text: 'OK' }]);
       else Alert.alert('Sent', 'Nutrition plan sent on WhatsApp.');
     } catch (e) { Alert.alert('Could not send', e.message); } finally { setSendingNutrition(false); }

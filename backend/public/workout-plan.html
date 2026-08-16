@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Default Workout Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div style="margin-bottom: 24px;">
+      <h1 class="display">Default Workout Plan</h1>
+      <div class="body">Every member without a PT package sees this one shared plan. PT clients keep getting their own trainer's plan from the Trainers page instead.</div>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <div class="card">
+      <div class="field">
+        <label>Plan Name</label>
+        <input type="text" id="wp-name" placeholder="e.g. Gym Standard Plan" />
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin: 16px 0;" id="wp-day-tabs"></div>
+
+      <div class="field">
+        <label>Focus (e.g. "Push Day", "Rest")</label>
+        <input type="text" id="wp-focus" placeholder="Focus for this day" />
+      </div>
+      <div class="field">
+        <label>Exercises — one per line: Exercise | Muscle Group | Machine | Sets</label>
+        <textarea id="wp-exercises" rows="6" placeholder="Squats | Legs | Barbell | 3x10&#10;Treadmill | | | 20 min" style="font-family: 'JetBrains Mono', monospace;"></textarea>
+      </div>
+
+      <div class="flex gap" style="margin-top: 16px;">
+        <button class="btn btn-tonal" id="wp-save-btn">
+          <span class="material-symbols-rounded">save</span>Save
+        </button>
+        <button class="btn btn-filled" id="wp-send-btn">
+          <span class="material-symbols-rounded">forum</span>Save &amp; Send to All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script src="/workout-plan.js"></script>
+</body>
+</html>

@@ -20,9 +20,13 @@ export default function WorkoutScreen({ user }) {
       <Text style={styles.planName}>{plan.name}</Text>
       <Text style={styles.planMeta}>Assigned by {plan.assignedBy}</Text>
 
-      {plan.days.map((day) => (
-        <DayCard key={day.day} day={day} isToday={day.day === today} />
-      ))}
+      {(plan.days || []).length === 0 ? (
+        <Empty text="Your plan is being put together — check back soon." />
+      ) : (
+        plan.days.map((day) => (
+          <DayCard key={day.day} day={day} isToday={day.day === today} />
+        ))
+      )}
       <View style={{ height: 30 }} />
     </ScrollView>
   );
@@ -62,8 +66,8 @@ const styles = StyleSheet.create({
     padding: 14, marginBottom: 10,
   },
   dayCardToday: {
-    borderWidth: 1, borderColor: 'rgba(255,181,154,0.30)',
-    backgroundColor: 'rgba(255,181,154,0.06)',
+    borderWidth: 1, borderColor: 'rgba(59,130,246,0.30)',
+    backgroundColor: 'rgba(59,130,246,0.06)',
   },
   dayHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 },
   dayName:  { color: colors.onSurface, fontWeight: '700', fontSize: 15 },

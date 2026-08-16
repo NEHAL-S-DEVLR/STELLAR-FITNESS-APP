@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Plans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="flex between" style="margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h1 class="display">Membership Plans</h1>
+        <div class="body">These plans show on the public website's Membership page, in this order.</div>
+      </div>
+      <button class="btn btn-filled" id="add-plan-btn">
+        <span class="material-symbols-rounded">add</span>Add Plan
+      </button>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <div id="plans-loading" class="body" style="padding: 20px 0;">Loading…</div>
+    <div id="plans-grid" class="grid cols-3" style="display:none;"></div>
+    <div id="plans-empty" class="empty" style="display:none;">
+      <span class="material-symbols-rounded">sell</span>
+      No plans yet — add one to show it on the website.
+    </div>
+  </div>
+
+  <!-- Add/Edit Plan Modal -->
+  <div class="modal-backdrop" id="plan-modal">
+    <div class="modal">
+      <div class="flex between" style="margin-bottom: 16px;">
+        <h3 id="plan-modal-title">Add Plan</h3>
+        <button class="btn btn-text icon" onclick="closeModal('plan-modal')">
+          <span class="material-symbols-rounded">close</span>
+        </button>
+      </div>
+      <div id="plan-modal-error" class="error-banner"></div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="pl-name" placeholder="e.g. Monthly" />
+        </div>
+        <div class="field">
+          <label>Duration (days)</label>
+          <input type="number" id="pl-duration" min="1" placeholder="30" />
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Price (₹)</label>
+          <input type="number" id="pl-price" min="0" step="0.01" placeholder="0" />
+        </div>
+        <div class="field">
+          <label>Original Price (₹) — optional, shown struck-through</label>
+          <input type="number" id="pl-original-price" min="0" step="0.01" placeholder="Optional" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <input type="text" id="pl-description" placeholder="One line under the plan name" />
+      </div>
+      <div class="field">
+        <label>Features — one per line</label>
+        <textarea id="pl-features" rows="4" placeholder="Full gym floor & free weights&#10;Locker room access&#10;Group classes included"></textarea>
+      </div>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top: 4px;">
+        <input type="checkbox" id="pl-highlighted" style="width:16px; height:16px;" />
+        <span style="font-size:13px;">Show "Most Popular" badge</span>
+      </label>
+      <div class="modal-actions">
+        <button class="btn btn-text" onclick="closeModal('plan-modal')">Cancel</button>
+        <button class="btn btn-filled" id="plan-save-btn">
+          <span class="material-symbols-rounded">save</span>Save Plan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script src="/plans.js"></script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellar Fitness Club — Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0..1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="appbar">
+    <div class="brand"><div class="logo">SF</div><div>Stellar Fitness Club</div></div>
+    <div class="appbar-right">
+      <div class="user-chip" id="user-chip"></div>
+      <button class="btn btn-text sm" onclick="logout()">
+        <span class="material-symbols-rounded">logout</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div style="margin-bottom: 24px;">
+      <h1 class="display">Gallery</h1>
+      <div class="body">Photos shown on the public website's Gallery page — Equipment is one of the categories.</div>
+    </div>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- Add Photo -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-header">
+        <h2><span class="material-symbols-rounded">add_a_photo</span>Add Photo</h2>
+      </div>
+      <div id="add-error" class="error-banner"></div>
+      <div class="form-row cols-2">
+        <div class="field">
+          <label>Category</label>
+          <select id="gal-category">
+            <option value="Gym">Gym</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Classes">Classes</option>
+            <option value="Events">Events</option>
+            <option value="Transformations">Transformations</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Title</label>
+          <input type="text" id="gal-title" placeholder="e.g. Squat rack row" />
+        </div>
+      </div>
+
+      <div class="auth-toggle" style="margin: 12px 0 20px;">
+        <button type="button" id="gal-tab-upload" class="active">Upload File</button>
+        <button type="button" id="gal-tab-url">Paste URL</button>
+      </div>
+
+      <div id="gal-upload-form" class="field">
+        <label>Photo File</label>
+        <input type="file" id="gal-file" accept="image/*" />
+        <div id="gal-preview" style="display:none; margin-top:10px;">
+          <img id="gal-preview-img" style="max-width:200px; max-height:150px; border-radius:8px;" />
+        </div>
+      </div>
+      <div id="gal-url-form" class="field" style="display:none;">
+        <label>Image URL</label>
+        <input type="url" id="gal-url" placeholder="https://…" />
+      </div>
+
+      <button class="btn btn-filled" id="add-gal-btn">
+        <span class="material-symbols-rounded">save</span>Add Photo
+      </button>
+    </div>
+
+    <div id="gallery-loading" class="body" style="padding: 20px 0;">Loading…</div>
+    <div id="gallery-grid" class="grid cols-4" style="display:none;"></div>
+    <div id="gallery-empty" class="empty" style="display:none;">
+      <span class="material-symbols-rounded">image</span>
+      No photos yet.
+    </div>
+  </div>
+
+  <script src="/api.js"></script>
+  <script src="/admin-nav.js"></script>
+  <script src="/gallery-admin.js"></script>
+</body>
+</html>

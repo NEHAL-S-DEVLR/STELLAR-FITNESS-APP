@@ -14,12 +14,16 @@ const BACKEND_PAGES = [
   "checkin.html",
   "enquiries.html", "enquiries.js",
   "expenses.html", "expenses.js", "library.js",
+  "gallery-admin.html", "gallery-admin.js",
   "gym-pass.html", "member-verify.html",
   "manual.html",
+  "plans.html", "plans.js",
   "profile.html", "profile.js",
+  "registration-form.html",
   "reports.html", "reports.js", "styles.css",
   "trainer-portal.html", "trainer-portal.js",
   "trainers.html", "trainers.js",
+  "workout-plan.html", "workout-plan.js",
 ];
 
 const nextConfig: NextConfig = {

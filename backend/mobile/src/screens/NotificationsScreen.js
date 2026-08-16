@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md, backgroundColor: colors.surfaceVar, marginBottom: 8,
   },
   cardUnread: {
-    backgroundColor: 'rgba(255,181,154,0.10)',
+    backgroundColor: 'rgba(59,130,246,0.10)',
     borderLeftWidth: 3, borderLeftColor: colors.primary,
   },
   icon: {

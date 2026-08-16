@@ -5,7 +5,7 @@ import { Card, Chip, Empty, Button } from '../components/Common';
 import { colors, radius, spacing } from '../theme';
 import { api, daysUntil } from '../api';
 
-export default function AdminMembersScreen({ navigation }) {
+export default function AdminMembersScreen({ navigation, isAdmin }) {
   const [members, setMembers] = useState(null);
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -68,7 +68,7 @@ export default function AdminMembersScreen({ navigation }) {
         const days = item.subscription ? daysUntil(item.subscription.expiryDate) : null;
         const expired = days != null && days < 0;
         return (
-          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminMemberDetail', { memberId: item.id })}>
+          <TouchableOpacity activeOpacity={0.8} onPress={() => navigation.navigate('AdminMemberDetail', { memberId: item.id, isAdmin })}>
             <Card style={{ marginBottom: 10 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View style={{ flex: 1 }}>

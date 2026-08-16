@@ -7,7 +7,7 @@ import { colors, radius, spacing } from '../theme';
 import { api, daysUntil } from '../api';
 
 export default function AdminMemberDetailScreen({ route, navigation }) {
-  const { memberId } = route.params;
+  const { memberId, isAdmin } = route.params;
   const [member, setMember] = useState(null);
   const [error, setError] = useState(null);
 
@@ -20,6 +20,7 @@ export default function AdminMemberDetailScreen({ route, navigation }) {
   const [batches, setBatches] = useState([]);
   const [batchId, setBatchId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [ptAssignment, setPtAssignment] = useState(null);
 
   const load = React.useCallback(() => {
     api(`/api/admin/members/${memberId}`)
@@ -35,7 +36,16 @@ export default function AdminMemberDetailScreen({ route, navigation }) {
       .catch((e) => setError(e.message));
     api('/api/admin/trainers').then(setTrainers).catch(() => {});
     api('/api/admin/batches').then(setBatches).catch(() => {});
-  }, [memberId]);
+    // A "Workout & Nutrition Plan" shortcut only makes sense for PT clients
+    // (normal members get the shared gym-wide plan instead), and the routes
+    // it opens are trainer/admin-only — staff can't use them even with
+    // members.manage, so skip the fetch and hide the button for staff.
+    if (isAdmin) {
+      api(`/api/admin/pt-assignments?member_id=${memberId}&status=active`)
+        .then((rows) => setPtAssignment(rows[0] || null))
+        .catch(() => setPtAssignment(null));
+    }
+  }, [memberId, isAdmin]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -94,6 +104,20 @@ export default function AdminMemberDetailScreen({ route, navigation }) {
         icon={<Ionicons name="card" size={16} color={colors.primary} />}
         style={{ marginTop: 16 }}
       />
+
+      {ptAssignment && (
+        <Button
+          label="Workout & Nutrition Plan"
+          variant="tonal"
+          onPress={() => navigation.navigate('TrainerClientDetail', {
+            clientId: memberId, clientName: member.name,
+            status: ptAssignment.status, packageName: ptAssignment.package_name,
+            trainerId: ptAssignment.trainer_id,
+          })}
+          icon={<Ionicons name="barbell" size={16} color={colors.onPrimaryContainer} />}
+          style={{ marginTop: 10 }}
+        />
+      )}
 
       <SectionTitle>Details</SectionTitle>
       <Card>

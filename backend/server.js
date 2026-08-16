@@ -177,6 +177,20 @@ async function initSchema() {
       is_active BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS original_price NUMERIC(10,2);
+    ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS features JSONB;
+    ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS highlighted BOOLEAN NOT NULL DEFAULT FALSE;
+    ALTER TABLE subscription_plans ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+
+    CREATE TABLE IF NOT EXISTS gallery_items (
+      id SERIAL PRIMARY KEY,
+      category TEXT NOT NULL,
+      title TEXT NOT NULL,
+      image_url TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
 
     CREATE TABLE IF NOT EXISTS payments (
       id SERIAL PRIMARY KEY,
@@ -1402,6 +1416,22 @@ async function fullUser(id) {
   } else {
     u.trainer = null;
   }
+  // PT-assignment status is the source of truth for which plans a member
+  // sees, not whatever happens to be sitting in workout_plan_json/
+  // nutrition_plan_json — a member whose PT package later gets cancelled
+  // must fall back to the shared gym-wide workout plan (and lose the
+  // now-stale personal nutrition plan entirely, since there's no default
+  // nutrition plan concept), not keep showing their old trainer's plans.
+  if (u.role === 'member') {
+    const onPt = await q1(
+      `SELECT 1 FROM pt_assignments WHERE user_id = $1 AND status IN ('active','completed') LIMIT 1`,
+      [id]
+    );
+    if (!onPt) {
+      u.workoutPlan = await getDefaultWorkoutPlan();
+      u.nutritionPlan = null;
+    }
+  }
   return u;
 }
 
@@ -1566,6 +1596,7 @@ const PERMISSION_CATALOG = [
   { key: 'batches.manage',     label: 'Manage batches',               group: 'Members' },
   { key: 'attendance.manage',  label: 'Attendance & check-in QR',     group: 'Members' },
   { key: 'pt.manage',          label: 'PT packages & assignments',    group: 'Personal Training' },
+  { key: 'workout.manage',     label: 'Default workout plan',         group: 'Members' },
   { key: 'trainers.manage',    label: 'Add & manage trainers',        group: 'Team' },
   { key: 'enquiries.manage',   label: 'Enquiries & leads',            group: 'Front Desk' },
   { key: 'notifications.send', label: 'Send WhatsApp & notifications',group: 'Front Desk' },
@@ -1774,6 +1805,34 @@ ${days || 'Your trainer will add exercise details shortly.'}
 Stick to this and let your trainer know how it's going.
 
 — ${trainerName}, Stellar Fitness Club`;
+}
+
+// Same day/exercise formatting as buildWorkoutPlanMessage, but for the one
+// shared gym-wide plan non-PT members get — no "trainer" framing, since
+// nobody personally wrote this one for them.
+function buildDefaultWorkoutPlanMessage({ memberName, plan }) {
+  const firstName = memberName.split(' ')[0];
+  const days = (plan.days || [])
+    .filter(d => (d.items || []).length > 0)
+    .map(d => {
+      const exercises = d.items.map(it => {
+        const name = typeof it === 'string' ? it : it.exercise;
+        const sets = typeof it === 'object' && it.sets ? ` (${it.sets})` : '';
+        return `  • ${name}${sets}`;
+      }).join('\n');
+      return `*${d.day}${d.focus ? ` — ${d.focus}` : ''}*\n${exercises}`;
+    })
+    .join('\n\n');
+
+  return `Hi ${firstName},
+
+Here's the gym's standard workout plan${plan.name ? ` — *${plan.name}*` : ''}:
+
+${days || 'Coming soon — check back shortly.'}
+
+Questions? Just ask our team at the front desk.
+
+— Stellar Fitness Club`;
 }
 
 // Generic WhatsApp text sender (diet plans, and anything else that isn't the
@@ -2406,28 +2465,31 @@ app.get('/api/config', wrap(async (req, res) => {
 // ---- Subscription plans (catalog) ----
 app.get('/api/plans', auth, wrap(async (req, res) => {
   const rows = await q(`
-    SELECT id, name, price::float AS price, currency, duration_days, description, is_active
-    FROM subscription_plans WHERE is_active = TRUE ORDER BY duration_days, price
+    SELECT id, name, price::float AS price, original_price::float AS "originalPrice",
+           currency, duration_days, description, features, highlighted, is_active
+    FROM subscription_plans WHERE is_active = TRUE ORDER BY sort_order, duration_days, price
   `);
   res.json(rows);
 }));
 
 app.get('/api/admin/plans', auth, requirePermission('finance.view'), wrap(async (req, res) => {
   const rows = await q(`
-    SELECT id, name, price::float AS price, currency, duration_days, description, is_active, created_at
-    FROM subscription_plans ORDER BY is_active DESC, duration_days
+    SELECT id, name, price::float AS price, original_price::float AS "originalPrice",
+           currency, duration_days, description, features, highlighted, sort_order, is_active, created_at
+    FROM subscription_plans ORDER BY is_active DESC, sort_order, duration_days
   `);
   res.json(rows);
 }));
 
 app.post('/api/admin/plans', auth, requirePermission('finance.view'), wrap(async (req, res) => {
-  const { name, price, duration_days, description } = req.body || {};
+  const { name, price, original_price, duration_days, description, features, highlighted, sort_order } = req.body || {};
   if (!name || price == null || !duration_days) return res.status(400).json({ error: 'name, price, duration_days required' });
   try {
     const row = await q1(`
-      INSERT INTO subscription_plans (name, price, duration_days, description)
-      VALUES ($1,$2,$3,$4) RETURNING id
-    `, [name.trim(), price, duration_days, description || null]);
+      INSERT INTO subscription_plans (name, price, original_price, duration_days, description, features, highlighted, sort_order)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id
+    `, [name.trim(), price, original_price || null, duration_days, description || null,
+        Array.isArray(features) ? JSON.stringify(features) : null, !!highlighted, parseInt(sort_order, 10) || 0]);
     res.json({ id: row.id });
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ error: 'A plan with that name already exists' });
@@ -2436,13 +2498,17 @@ app.post('/api/admin/plans', auth, requirePermission('finance.view'), wrap(async
 }));
 
 app.patch('/api/admin/plans/:id', auth, requirePermission('finance.view'), wrap(async (req, res) => {
-  const { name, price, duration_days, description, is_active } = req.body || {};
+  const { name, price, original_price, duration_days, description, features, highlighted, sort_order, is_active } = req.body || {};
   const parts = []; const vals = []; let i = 1;
-  if (name          != null) { parts.push(`name = $${i++}`);          vals.push(name); }
-  if (price         != null) { parts.push(`price = $${i++}`);         vals.push(price); }
-  if (duration_days != null) { parts.push(`duration_days = $${i++}`); vals.push(duration_days); }
-  if (description   != null) { parts.push(`description = $${i++}`);   vals.push(description); }
-  if (is_active     != null) { parts.push(`is_active = $${i++}`);     vals.push(is_active); }
+  if (name           != null) { parts.push(`name = $${i++}`);           vals.push(name); }
+  if (price          != null) { parts.push(`price = $${i++}`);          vals.push(price); }
+  if (original_price !== undefined) { parts.push(`original_price = $${i++}`); vals.push(original_price || null); }
+  if (duration_days  != null) { parts.push(`duration_days = $${i++}`);  vals.push(duration_days); }
+  if (description    != null) { parts.push(`description = $${i++}`);    vals.push(description); }
+  if (features       !== undefined) { parts.push(`features = $${i++}`); vals.push(Array.isArray(features) ? JSON.stringify(features) : null); }
+  if (highlighted    != null) { parts.push(`highlighted = $${i++}`);    vals.push(!!highlighted); }
+  if (sort_order     != null) { parts.push(`sort_order = $${i++}`);     vals.push(parseInt(sort_order, 10) || 0); }
+  if (is_active      != null) { parts.push(`is_active = $${i++}`);      vals.push(is_active); }
   if (!parts.length) return res.json({ ok: true });
   vals.push(req.params.id);
   await pool.query(`UPDATE subscription_plans SET ${parts.join(', ')} WHERE id = $${i}`, vals);
@@ -3176,8 +3242,9 @@ app.post('/api/admin/admissions/:id/payment', auth, requirePermission('finance.v
 // (unlike GET /api/plans, which is for the logged-in app).
 app.get('/api/public/plans', publicSiteCors, wrap(async (req, res) => {
   const rows = await q(`
-    SELECT id, name, price::float AS price, duration_days
-    FROM subscription_plans WHERE is_active = TRUE ORDER BY duration_days, price
+    SELECT id, name, price::float AS price, original_price::float AS "originalPrice",
+           duration_days, description, features, highlighted
+    FROM subscription_plans WHERE is_active = TRUE ORDER BY sort_order, duration_days, price
   `);
   res.json(rows);
 }));
@@ -3256,6 +3323,135 @@ app.post('/api/admin/upload', auth, requireAnyPermission(['members.manage', 'tra
 }, wrap(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file received' });
   res.json({ url: `/uploads/${req.file.filename}` });
+}));
+
+// ============================== Gallery (public landing page) ==============================
+// Photos shown on the public site's Gallery page. Admin-only to add/edit/
+// remove (like trainer/staff account creation, this is never delegated to a
+// granted permission) — categories match the public site's filter chips.
+const GALLERY_CATEGORIES = ['Gym', 'Equipment', 'Classes', 'Events', 'Transformations'];
+
+app.get('/api/admin/gallery', auth, requireAdmin, wrap(async (req, res) => {
+  const rows = await q('SELECT * FROM gallery_items ORDER BY sort_order, created_at DESC');
+  res.json(rows);
+}));
+
+app.post('/api/admin/gallery/upload', auth, requireAdmin, (req, res, next) => {
+  if (IS_SERVERLESS) {
+    return res.status(501).json({ error: 'File uploads are not supported on this deployment. Paste a URL instead.' });
+  }
+  uploadDoc.single('file')(req, res, err => {
+    if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
+    next();
+  });
+}, wrap(async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file received' });
+  res.json({ url: `/uploads/${req.file.filename}` });
+}));
+
+app.post('/api/admin/gallery', auth, requireAdmin, wrap(async (req, res) => {
+  const { category, title, image_url, sort_order } = req.body || {};
+  if (!category || !GALLERY_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Valid category required' });
+  if (!title || !image_url) return res.status(400).json({ error: 'title and image_url required' });
+  const row = await q1(
+    'INSERT INTO gallery_items (category, title, image_url, sort_order) VALUES ($1,$2,$3,$4) RETURNING id',
+    [category, title.trim(), image_url.trim(), parseInt(sort_order, 10) || 0]
+  );
+  res.json({ id: row.id });
+}));
+
+app.patch('/api/admin/gallery/:id', auth, requireAdmin, wrap(async (req, res) => {
+  const { category, title, image_url, sort_order } = req.body || {};
+  if (category != null && !GALLERY_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Invalid category' });
+  const parts = []; const vals = []; let i = 1;
+  if (category   != null) { parts.push(`category = $${i++}`);   vals.push(category); }
+  if (title      != null) { parts.push(`title = $${i++}`);      vals.push(title); }
+  if (image_url  != null) { parts.push(`image_url = $${i++}`);  vals.push(image_url); }
+  if (sort_order != null) { parts.push(`sort_order = $${i++}`); vals.push(parseInt(sort_order, 10) || 0); }
+  if (!parts.length) return res.json({ ok: true });
+  vals.push(req.params.id);
+  await pool.query(`UPDATE gallery_items SET ${parts.join(', ')} WHERE id = $${i}`, vals);
+  res.json({ ok: true });
+}));
+
+app.delete('/api/admin/gallery/:id', auth, requireAdmin, wrap(async (req, res) => {
+  const row = await q1('SELECT image_url FROM gallery_items WHERE id = $1', [req.params.id]);
+  if (row && row.image_url && row.image_url.startsWith('/uploads/')) {
+    fs.promises.unlink(path.join(__dirname, 'public', row.image_url)).catch(() => {});
+  }
+  await pool.query('DELETE FROM gallery_items WHERE id = $1', [req.params.id]);
+  res.json({ ok: true });
+}));
+
+app.get('/api/public/gallery', publicSiteCors, wrap(async (req, res) => {
+  const rows = await q(
+    'SELECT id, category, title, image_url AS "imageUrl" FROM gallery_items ORDER BY sort_order, created_at DESC'
+  );
+  res.json(rows);
+}));
+
+// ============================== Default Workout Plan ==============================
+// Every member WITHOUT an active/completed PT assignment sees this one
+// shared plan (set by admin or a staff member granted 'workout.manage') —
+// PT clients keep getting their own trainer-written plan instead, never
+// this one. See fullUser() below for the fallback logic itself.
+const DEFAULT_WORKOUT_PLAN_KEY = 'default_workout_plan';
+const EMPTY_WORKOUT_PLAN = { name: 'Gym Standard Plan', assignedBy: 'Stellar Fitness Club', days: [] };
+
+async function getDefaultWorkoutPlan() {
+  // gym_settings.value is TEXT (pre-existing table, also used for
+  // checkin_secret as a plain string) — not JSONB — so this needs an
+  // explicit parse rather than relying on the driver to do it.
+  const row = await q1('SELECT value FROM gym_settings WHERE key = $1', [DEFAULT_WORKOUT_PLAN_KEY]);
+  if (!row?.value) return EMPTY_WORKOUT_PLAN;
+  try { return JSON.parse(row.value); } catch { return EMPTY_WORKOUT_PLAN; }
+}
+
+app.get('/api/admin/default-workout-plan', auth, requirePermission('workout.manage'), wrap(async (req, res) => {
+  res.json(await getDefaultWorkoutPlan());
+}));
+
+app.put('/api/admin/default-workout-plan', auth, requirePermission('workout.manage'), wrap(async (req, res) => {
+  const plan = { ...EMPTY_WORKOUT_PLAN, ...req.body, assignedBy: 'Stellar Fitness Club' };
+  await pool.query(
+    `INSERT INTO gym_settings (key, value) VALUES ($1,$2)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
+    [DEFAULT_WORKOUT_PLAN_KEY, JSON.stringify(plan)]
+  );
+  res.json({ ok: true });
+}));
+
+// Sends the current default plan to every active member who does NOT have
+// an active/completed PT assignment (those members use their trainer's own
+// send flow instead — sending them the default here would be misleading).
+app.post('/api/admin/default-workout-plan/whatsapp', auth, requirePermission('workout.manage'), wrap(async (req, res) => {
+  const plan = await getDefaultWorkoutPlan();
+  const recipients = await q(`
+    SELECT u.id, u.name, u.phone FROM users u
+    WHERE u.role = 'member' AND u.phone IS NOT NULL AND u.phone <> ''
+      AND u.subscription_expiry IS NOT NULL AND u.subscription_expiry >= $1
+      AND NOT EXISTS (
+        SELECT 1 FROM pt_assignments pa WHERE pa.user_id = u.id AND pa.status IN ('active','completed')
+      )
+    ORDER BY u.name
+  `, [todayISO()]);
+
+  const results = [];
+  for (const m of recipients) {
+    try {
+      const message = buildDefaultWorkoutPlanMessage({ memberName: m.name, plan });
+      const r = await sendWhatsAppText({ phone: m.phone, message });
+      results.push({ memberId: m.id, name: m.name, phone: r.phone, mode: r.mode, link: r.link || null });
+    } catch (e) {
+      results.push({ memberId: m.id, name: m.name, phone: m.phone, mode: 'error', error: e.message });
+    }
+  }
+
+  await pool.query(
+    'INSERT INTO broadcasts (type, title, body, sent, recipients, sent_by) VALUES ($1,$2,$3,$4,$5,$6)',
+    ['whatsapp-default-workout', 'Default workout plan sent', plan.name || '', new Date().toISOString(), results.length, req.user.name]
+  );
+  res.json({ results, waConfigured: WA_CONFIGURED });
 }));
 
 // ============================== Batches ==============================
@@ -3483,6 +3679,39 @@ app.post('/api/admin/trainers', auth, requireAdmin, wrap(async (req, res) => {
       certificate_url || null, instagram || null, photo_url || null, !!is_partner,
       JSON.stringify(sanitizePermissions(permissions))]);
   res.json({ id: row.id });
+}));
+
+// Same "send login credentials on WhatsApp" pattern as new staff/members —
+// the plaintext password only exists in the create-trainer request body at
+// the moment of creation, so this must be called right after POST above.
+app.post('/api/admin/trainers/:id/send-credentials', auth, requireAdmin, wrap(async (req, res) => {
+  const { password } = req.body || {};
+  if (!password) return res.status(400).json({ error: 'password required' });
+
+  const account = await q1("SELECT name, email, phone FROM users WHERE id = $1 AND role = 'trainer'", [req.params.id]);
+  if (!account) return res.status(404).json({ error: 'Trainer account not found' });
+  if (!account.phone) return res.status(400).json({ error: 'Trainer account has no phone number on file' });
+
+  const loginUrl = `${req.protocol}://${req.get('host')}/login.html`;
+  const message = `Hi ${account.name.split(' ')[0]},
+
+Your Stellar Fitness Club trainer account is ready!
+
+Login: ${loginUrl}
+Email: ${account.email}
+Password: ${password}
+
+Please change your password after your first login.
+
+— Team Stellar Fitness`;
+
+  const result = await sendWhatsAppText({ phone: account.phone, message });
+
+  await pool.query(
+    'INSERT INTO broadcasts (type, title, body, sent, recipients, sent_by) VALUES ($1,$2,$3,$4,$5,$6)',
+    [`whatsapp-${result.mode}`, `WhatsApp: trainer login credentials sent to ${account.name}`, result.message, new Date().toISOString(), 1, req.user.name]
+  );
+  res.json(result);
 }));
 
 app.patch('/api/admin/trainers/:id', auth, requireAdmin, wrap(async (req, res) => {

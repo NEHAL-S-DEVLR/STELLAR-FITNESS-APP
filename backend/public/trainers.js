@@ -252,9 +252,36 @@
         password:        document.getElementById('at-password').value,
         permissions:     getCheckedPermissions(document.getElementById('at-permissions')),
       };
-      await api('/api/admin/trainers', { method: 'POST', body });
+      const created = await api('/api/admin/trainers', { method: 'POST', body });
       closeModal('add-trainer-modal');
       await loadTrainers();
+
+      document.getElementById('sc-summary').innerHTML = body.phone
+        ? `<strong>${body.name}</strong> is set up with email <strong>${body.email}</strong>.
+           Send their login details to <strong>${body.phone}</strong>?`
+        : `<strong>${body.name}</strong> is set up with email <strong>${body.email}</strong>.
+           No phone number on file — add one to their profile to send credentials over WhatsApp.`;
+      const sendBtn = document.getElementById('sc-send-creds');
+      sendBtn.style.display = body.phone ? 'inline-flex' : 'none';
+      sendBtn.onclick = async () => {
+        sendBtn.disabled = true;
+        try {
+          const result = await api(`/api/admin/trainers/${created.id}/send-credentials`, {
+            method: 'POST', body: { password: body.password },
+          });
+          if (result.mode === 'api') {
+            alert(`✅ Login credentials sent to ${body.name} (${result.phone}).`);
+            closeModal('staff-created-modal');
+          } else {
+            window.open(result.link, '_blank', 'noopener');
+          }
+        } catch (e) {
+          alert(`Could not send credentials: ${e.message}`);
+        } finally {
+          sendBtn.disabled = false;
+        }
+      };
+      openModal('staff-created-modal');
     } catch (e) { alert(e.message); } finally { btn.disabled = false; }
   });
 

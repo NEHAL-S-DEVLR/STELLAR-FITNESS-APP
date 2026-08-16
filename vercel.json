@@ -25,11 +25,16 @@
     { "source": "/expenses.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/expenses.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/library.js", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/gallery-admin.html", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/gallery-admin.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/gym-pass.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/member-verify.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/manual.html", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/plans.html", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/plans.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/profile.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/profile.js", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/registration-form.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/reports.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/reports.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/styles.css", "destination": { "type": "service", "service": "backend" } },
@@ -37,6 +42,8 @@
     { "source": "/trainer-portal.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/trainers.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/trainers.js", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/workout-plan.html", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/workout-plan.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/(.*)", "destination": { "type": "service", "service": "frontend" } }
   ]
 }

@@ -47,6 +47,9 @@ import AdminReportsScreen from './src/screens/AdminReportsScreen';
 import TrainerWorkingHoursScreen from './src/screens/TrainerWorkingHoursScreen';
 import MemberProgressScreen from './src/screens/MemberProgressScreen';
 import MemberPaymentsScreen from './src/screens/MemberPaymentsScreen';
+import AdminPlansScreen from './src/screens/AdminPlansScreen';
+import AdminGalleryScreen from './src/screens/AdminGalleryScreen';
+import AdminDefaultWorkoutScreen from './src/screens/AdminDefaultWorkoutScreen';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -112,6 +115,9 @@ export default function App() {
             <RootStack.Screen name="AdminReports" component={AdminReportsScreen} options={{ headerShown: true, title: 'Reports' }} />
             <RootStack.Screen name="MemberProgress" component={MemberProgressScreen} options={{ headerShown: true, title: 'Progress' }} />
             <RootStack.Screen name="MemberPayments" component={MemberPaymentsScreen} options={{ headerShown: true, title: 'Payment History' }} />
+            <RootStack.Screen name="AdminPlans" component={AdminPlansScreen} options={{ headerShown: true, title: 'Plans' }} />
+            <RootStack.Screen name="AdminGallery" component={AdminGalleryScreen} options={{ headerShown: true, title: 'Gallery' }} />
+            <RootStack.Screen name="AdminDefaultWorkout" component={AdminDefaultWorkoutScreen} options={{ headerShown: true, title: 'Default Workout Plan' }} />
           </RootStack.Navigator>
         ) : (
           <LoginScreen onSignedIn={() => setSignedIn(true)} />
@@ -236,7 +242,9 @@ function AdminTabs({ user, onLogout }) {
       <Tab.Screen name="Dashboard" options={{ tabBarIcon: ({ color }) => <Ionicons name="grid" size={22} color={color} /> }}>
         {({ navigation }) => <AdminDashboardScreen navigation={navigation} isAdmin={user.role === 'admin'} />}
       </Tab.Screen>
-      <Tab.Screen name="Members" component={AdminMembersScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} /> }} />
+      <Tab.Screen name="Members" options={{ tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} /> }}>
+        {({ navigation }) => <AdminMembersScreen navigation={navigation} isAdmin={user.role === 'admin'} />}
+      </Tab.Screen>
       <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
         {() => <SimpleAccountScreen user={user} onLogout={onLogout} />}
       </Tab.Screen>

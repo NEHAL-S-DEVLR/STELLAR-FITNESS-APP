@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>New Member Registration Form — Stellar Fitness Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #111;
+    background: #e5e5e5;
+    margin: 0;
+    padding: 24px;
+  }
+  .toolbar {
+    max-width: 800px; margin: 0 auto 16px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .toolbar p { font-size: 13px; color: #444; margin: 0; }
+  .toolbar button {
+    background: #1D4ED8; color: #fff; border: none; padding: 10px 20px;
+    border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+  .sheet {
+    max-width: 800px; margin: 0 auto; background: #fff; padding: 40px 48px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+  }
+  .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #111; padding-bottom: 14px; margin-bottom: 20px; }
+  .brand { font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 1px; }
+  .brand span { color: #1D4ED8; }
+  .header .doc-title { text-align: right; }
+  .header .doc-title .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; }
+  .header .doc-title .title { font-size: 18px; font-weight: 700; }
+  .top-meta { display: flex; gap: 24px; margin-bottom: 22px; font-size: 13px; }
+  .top-meta div { flex: 1; border-bottom: 1px solid #999; padding-bottom: 4px; }
+  .top-meta label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #777; margin-bottom: 10px; }
+  .section-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    background: #111; color: #fff; padding: 5px 10px; margin: 22px 0 14px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+  .grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .field { border-bottom: 1px solid #999; padding-bottom: 4px; min-height: 30px; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px; color: #777; margin-bottom: 12px; }
+  .checks { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 13px; }
+  .checks span { display: inline-flex; align-items: center; gap: 6px; }
+  .box { width: 13px; height: 13px; border: 1.5px solid #333; display: inline-block; }
+  .note { font-size: 11px; color: #777; margin-top: 4px; }
+  textarea.field, .field.tall { min-height: 54px; }
+  .sign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 36px; }
+  .sign-row .line { border-bottom: 1px solid #333; height: 44px; }
+  .sign-row label { display: block; font-size: 11px; color: #555; margin-top: 6px; }
+  .footer-note { margin-top: 24px; font-size: 10.5px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .toolbar { display: none; }
+    .sheet { box-shadow: none; padding: 30px 40px; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <p>Print a stack of these for the front desk — walk-ins fill it by hand, staff enters it into the system afterward.</p>
+    <button onclick="window.print()">Print Form</button>
+  </div>
+
+  <div class="sheet">
+    <div class="header">
+      <div class="brand">STELLAR <span>FITNESS</span> CLUB</div>
+      <div class="doc-title">
+        <div class="label">Front Desk</div>
+        <div class="title">New Member Registration</div>
+      </div>
+    </div>
+
+    <div class="top-meta">
+      <div><label>Date</label></div>
+      <div><label>Receipt / Ref No.</label></div>
+      <div><label>Filled By (Staff)</label></div>
+    </div>
+
+    <div class="section-title">Personal Details</div>
+    <div class="grid">
+      <div class="field full"><label>Full Name</label></div>
+      <div class="field"><label>Date of Birth</label></div>
+      <div class="field">
+        <label>Blood Group</label>
+        <div class="checks">
+          <span><i class="box"></i>A+</span><span><i class="box"></i>A−</span>
+          <span><i class="box"></i>B+</span><span><i class="box"></i>B−</span>
+          <span><i class="box"></i>O+</span><span><i class="box"></i>O−</span>
+          <span><i class="box"></i>AB+</span><span><i class="box"></i>AB−</span>
+        </div>
+      </div>
+      <div class="field"><label>Phone / WhatsApp</label></div>
+      <div class="field"><label>Email</label></div>
+      <div class="field full"><label>Address</label></div>
+    </div>
+
+    <div class="section-title">Emergency Contact</div>
+    <div class="grid cols-3">
+      <div class="field"><label>Contact Name</label></div>
+      <div class="field"><label>Phone Number</label></div>
+      <div class="field"><label>Relation</label></div>
+    </div>
+
+    <div class="section-title">Health &amp; Fitness</div>
+    <div class="grid cols-3">
+      <div class="field"><label>Fitness Goal</label></div>
+      <div class="field"><label>Height (cm)</label></div>
+      <div class="field"><label>Current Weight (kg)</label></div>
+      <div class="field full tall"><label>Medical History — injuries, conditions, medications, allergies</label></div>
+    </div>
+
+    <div class="section-title">Membership</div>
+    <div class="grid">
+      <div class="field full">
+        <label>Plan Interested In</label>
+        <div class="checks">
+          <span><i class="box"></i>Monthly</span>
+          <span><i class="box"></i>Quarterly</span>
+          <span><i class="box"></i>Annual</span>
+          <span><i class="box"></i>Other: ____________</span>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Membership Type</label>
+        <div class="checks">
+          <span><i class="box"></i>Regular (Gym Only)</span>
+          <span><i class="box"></i>Personal Training</span>
+        </div>
+      </div>
+      <div class="field"><label>Preferred Trainer</label></div>
+      <div class="field">
+        <label>Preferred Batch</label>
+        <div class="checks">
+          <span><i class="box"></i>Morning</span><span><i class="box"></i>Evening</span>
+        </div>
+      </div>
+      <div class="field full">
+        <label>Payment Mode</label>
+        <div class="checks">
+          <span><i class="box"></i>Cash</span><span><i class="box"></i>UPI</span>
+          <span><i class="box"></i>Card</span><span><i class="box"></i>Bank Transfer</span>
+        </div>
+      </div>
+      <div class="field"><label>Amount Paid (₹)</label></div>
+      <div class="field"><label>Discount (₹)</label></div>
+    </div>
+
+    <div class="sign-row">
+      <div>
+        <div class="line"></div>
+        <label>Client Signature &amp; Date</label>
+      </div>
+      <div>
+        <div class="line"></div>
+        <label>Staff Signature &amp; Date</label>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      This form is for front-desk use only. Once filled, enter the details into Admin → Members → Add Member (and Admissions, if payment was collected) — this paper copy is not itself stored in the system.
+    </div>
+  </div>
+</body>
+</html>

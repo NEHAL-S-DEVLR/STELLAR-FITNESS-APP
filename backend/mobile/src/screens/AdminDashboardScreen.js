@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, StatCard, SectionTitle, Empty } from '../components/Common';
 import { colors, radius, spacing } from '../theme';
-import { api } from '../api';
+import { api, Session } from '../api';
 
 const money = (v) => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
 
@@ -16,6 +16,10 @@ const MENU = [
   { key: 'AdminCheckinQr', icon: 'qr-code', label: 'Check-in QR', sub: 'Print or regenerate the entrance code' },
   { key: 'AdminExpenses', icon: 'receipt', label: 'Expenses', sub: 'Rent, salary, maintenance, etc.' },
   { key: 'AdminReports', icon: 'bar-chart', label: 'Reports', sub: 'Trends, attendance, profit split' },
+  { key: 'AdminDefaultWorkout', icon: 'barbell', label: 'Default Workout Plan', sub: 'Shared plan for non-PT members' },
+  { key: 'AdminPlans', icon: 'sell', label: 'Plans', sub: 'Membership pricing on the landing page' },
+  { key: 'AdminGallery', icon: 'images', label: 'Gallery', sub: 'Equipment & other photos on the landing page' },
+  { key: 'registration-form.html', icon: 'print', label: 'Print Registration Form', sub: 'Blank form for walk-in clients', isLink: true },
 ];
 
 const ADMIN_ONLY_MENU = [
@@ -91,7 +95,13 @@ export default function AdminDashboardScreen({ navigation, isAdmin }) {
 
       <SectionTitle>Manage</SectionTitle>
       {[...MENU, ...(isAdmin ? ADMIN_ONLY_MENU : [])].map((item) => (
-        <TouchableOpacity key={item.key} activeOpacity={0.8} onPress={() => navigation.navigate(item.key, { isAdmin })}>
+        <TouchableOpacity
+          key={item.key}
+          activeOpacity={0.8}
+          onPress={() => item.isLink
+            ? Session.getBaseUrl().then(base => Linking.openURL(`${base}/${item.key}`))
+            : navigation.navigate(item.key, { isAdmin })}
+        >
           <Card style={{ marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={styles.menuIcon}><Ionicons name={item.icon} size={20} color={colors.primary} /></View>
             <View style={{ flex: 1 }}>

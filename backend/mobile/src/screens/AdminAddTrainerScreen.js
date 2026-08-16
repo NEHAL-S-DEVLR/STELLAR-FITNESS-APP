@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TextInput, StyleSheet, Alert, ActivityIndicator, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Chip, Button } from '../components/Common';
 import { colors, radius, spacing } from '../theme';
@@ -18,7 +18,8 @@ export default function AdminAddTrainerScreen({ navigation }) {
     if (!name.trim() || !email.trim()) return Alert.alert('Missing info', 'Name and email are required.');
     setSaving(true);
     try {
-      await api('/api/admin/trainers', {
+      const effectivePassword = password.trim() || 'trainer123';
+      const { id } = await api('/api/admin/trainers', {
         method: 'POST',
         body: {
           name: name.trim(), email: email.trim(), phone: phone.trim() || null,
@@ -26,12 +27,36 @@ export default function AdminAddTrainerScreen({ navigation }) {
           is_partner: isPartner,
         },
       });
-      Alert.alert('Trainer added', password.trim() ? undefined : 'Default password: trainer123');
-      navigation.goBack();
+
+      if (phone.trim()) {
+        Alert.alert(
+          'Trainer added',
+          `Password: ${effectivePassword}\n\nSend their login details on WhatsApp now?`,
+          [
+            { text: 'Skip', style: 'cancel', onPress: () => navigation.goBack() },
+            { text: 'Send on WhatsApp', onPress: () => sendCredentials(id, effectivePassword) },
+          ]
+        );
+      } else {
+        Alert.alert('Trainer added', `Password: ${effectivePassword}\n\nNo phone on file, so credentials can't be sent on WhatsApp.`);
+        navigation.goBack();
+      }
     } catch (e) {
       Alert.alert('Could not add trainer', e.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendCredentials(id, effectivePassword) {
+    try {
+      const res = await api(`/api/admin/trainers/${id}/send-credentials`, { method: 'POST', body: { password: effectivePassword } });
+      if (res.mode === 'link' && res.link) Linking.openURL(res.link);
+      else Alert.alert('Sent', 'Login credentials sent on WhatsApp.');
+    } catch (e) {
+      Alert.alert('Could not send', e.message);
+    } finally {
+      navigation.goBack();
     }
   }
 

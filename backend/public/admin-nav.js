@@ -6,18 +6,23 @@
 // logout() is already provided by api.js
 
 const ADMIN_PAGES = [
-  { key: 'dashboard',  href: '/admin.html',       icon: 'dashboard',      label: 'Dashboard',  requires: null },
-  { key: 'enquiries',  href: '/enquiries.html',   icon: 'forum',          label: 'Enquiries',  requires: 'enquiries.manage' },
-  { key: 'admissions', href: '/admissions.html',  icon: 'assignment_add', label: 'Admissions', requires: 'finance.view' },
-  { key: 'trainers',   href: '/trainers.html',    icon: 'sports',         label: 'Trainers',   requires: ['trainers.manage', 'pt.manage'] },
-  { key: 'expenses',   href: '/expenses.html',    icon: 'receipt_long',   label: 'Expenses',   requires: 'expenses.manage' },
-  { key: 'reports',    href: '/reports.html',     icon: 'bar_chart',      label: 'Reports',    requires: 'reports.view' },
-  { key: 'manual',     href: '/manual.html',      icon: 'menu_book',      label: 'Manual',     requires: null },
+  { key: 'dashboard',  href: '/admin.html',              icon: 'dashboard',      label: 'Dashboard',  requires: null },
+  { key: 'enquiries',  href: '/enquiries.html',          icon: 'forum',          label: 'Enquiries',  requires: 'enquiries.manage' },
+  { key: 'admissions', href: '/admissions.html',         icon: 'assignment_add', label: 'Admissions', requires: 'finance.view' },
+  { key: 'trainers',   href: '/trainers.html',           icon: 'sports',         label: 'Trainers',   requires: ['trainers.manage', 'pt.manage'] },
+  { key: 'plans',      href: '/plans.html',              icon: 'sell',           label: 'Plans',      requires: 'finance.view' },
+  { key: 'gallery',    href: '/gallery-admin.html',      icon: 'photo_library',  label: 'Gallery',    requires: 'admin' },
+  { key: 'workout',    href: '/workout-plan.html',       icon: 'fitness_center', label: 'Default Workout', requires: 'workout.manage' },
+  { key: 'expenses',   href: '/expenses.html',           icon: 'receipt_long',   label: 'Expenses',   requires: 'expenses.manage' },
+  { key: 'reports',    href: '/reports.html',            icon: 'bar_chart',      label: 'Reports',    requires: 'reports.view' },
+  { key: 'form',       href: '/registration-form.html',  icon: 'print',          label: 'Print Form', requires: null },
+  { key: 'manual',     href: '/manual.html',             icon: 'menu_book',      label: 'Manual',     requires: null },
 ];
 
 function renderAdminNav(activePage, user) {
   const pages = ADMIN_PAGES.filter(p => {
     if (!p.requires) return true;
+    if (p.requires === 'admin') return user && user.role === 'admin';
     const keys = Array.isArray(p.requires) ? p.requires : [p.requires];
     return keys.some(k => hasPermission(user, k));
   });

@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
 
   quickChip: {
     paddingVertical: 6, paddingHorizontal: 12, borderRadius: radius.full,
-    backgroundColor: 'rgba(255,181,154,0.10)', borderWidth: 1, borderColor: 'rgba(255,181,154,0.20)',
+    backgroundColor: 'rgba(59,130,246,0.10)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.20)',
   },
   quickChipLabel: { color: colors.primary, fontSize: 11, fontWeight: '600' },
 });
