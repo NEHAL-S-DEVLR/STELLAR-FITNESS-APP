@@ -33,7 +33,7 @@ async function api(path, opts = {}) {
 function todayISO() { return new Date().toISOString().slice(0, 10); }
 
 // Locale-independent weekday name matching the day names workout plans are
-// stored with (e.g. WEEKDAYS in library.js). toLocaleDateString(undefined, ...)
+// stored with (e.g. WEEKDAYS in admin.js). toLocaleDateString(undefined, ...)
 // returns a translated name on non-English browsers/OSes, which then silently
 // fails to match any plan day — use this instead wherever "today" needs to
 // look up a plan day.

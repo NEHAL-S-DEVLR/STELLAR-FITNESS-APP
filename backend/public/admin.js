@@ -1,5 +1,7 @@
 // Admin dashboard.
 
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 (async function () {
   if (!Auth.token) { location.href = '/'; return; }
   let me;
