@@ -13,7 +13,7 @@ const BACKEND_PAGES = [
   "admissions.html", "admissions.js", "api.js",
   "checkin.html",
   "enquiries.html", "enquiries.js",
-  "expenses.html", "expenses.js", "library.js",
+  "expenses.html", "expenses.js",
   "gallery-admin.html", "gallery-admin.js",
   "gym-pass.html", "member-verify.html",
   "manual.html",

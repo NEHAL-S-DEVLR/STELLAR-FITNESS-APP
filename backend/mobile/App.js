@@ -38,6 +38,7 @@ import AdminExpensesScreen from './src/screens/AdminExpensesScreen';
 import AdminCheckinQrScreen from './src/screens/AdminCheckinQrScreen';
 import AdminFinanceScreen from './src/screens/AdminFinanceScreen';
 import AdminTrainersScreen from './src/screens/AdminTrainersScreen';
+import AdminTrainerDetailScreen from './src/screens/AdminTrainerDetailScreen';
 import AdminAddTrainerScreen from './src/screens/AdminAddTrainerScreen';
 import AdminNewAssignmentScreen from './src/screens/AdminNewAssignmentScreen';
 import AdminStaffScreen from './src/screens/AdminStaffScreen';
@@ -117,6 +118,7 @@ export default function App() {
             <RootStack.Screen name="MemberPayments" component={MemberPaymentsScreen} options={{ headerShown: true, title: 'Payment History' }} />
             <RootStack.Screen name="AdminPlans" component={AdminPlansScreen} options={{ headerShown: true, title: 'Plans' }} />
             <RootStack.Screen name="AdminGallery" component={AdminGalleryScreen} options={{ headerShown: true, title: 'Gallery' }} />
+            <RootStack.Screen name="AdminTrainerDetail" component={AdminTrainerDetailScreen} options={{ headerShown: true, title: '' }} />
             <RootStack.Screen name="AdminDefaultWorkout" component={AdminDefaultWorkoutScreen} options={{ headerShown: true, title: 'Default Workout Plan' }} />
           </RootStack.Navigator>
         ) : (
@@ -224,10 +226,15 @@ function MemberTabs({ user, refresh, refreshing, onLogout }) {
 }
 
 function TrainerTabs({ user, onLogout }) {
+  // Regular trainers can't see their own PT client count or earnings unless
+  // specifically granted 'trainer.earnings.view' — same gate as the website.
+  const canViewEarnings = user.role === 'admin' || (user.permissions || []).includes('trainer.earnings.view');
   return (
     <Tab.Navigator screenOptions={tabOptions}>
       <Tab.Screen name="Clients" component={TrainerClientsScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="people" size={22} color={color} /> }} />
-      <Tab.Screen name="Earnings" component={TrainerEarningsScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="cash" size={22} color={color} /> }} />
+      {canViewEarnings && (
+        <Tab.Screen name="Earnings" component={TrainerEarningsScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="cash" size={22} color={color} /> }} />
+      )}
       <Tab.Screen name="Hours" component={TrainerWorkingHoursScreen} options={{ tabBarIcon: ({ color }) => <Ionicons name="time" size={22} color={color} /> }} />
       <Tab.Screen name="Account" options={{ tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} /> }}>
         {() => <SimpleAccountScreen user={user} onLogout={onLogout} />}

@@ -20,6 +20,13 @@
     document.getElementById('manage-members-link').style.display = '';
   }
 
+  // Regular trainers can't see their own PT client count or earnings unless
+  // specifically granted 'trainer.earnings.view' — hide the tab entirely
+  // rather than let them click into a 403.
+  if (me.role === 'trainer' && !hasPermission(me, 'trainer.earnings.view')) {
+    document.querySelector('[data-ttab="earnings"]').style.display = 'none';
+  }
+
   // ---- Admin: view/act as any trainer ----------------------------------
   // Trainer-portal API routes are scoped to the logged-in trainer's own id.
   // An admin isn't literally the assigned trainer for anyone, so without
@@ -479,48 +486,29 @@
             <input type="text" class="day-focus" placeholder="Focus (e.g. Chest & Shoulders)" value="${d.focus || ''}" style="font-size:13px;" />
           </div>
         </div>
-        <div class="exercise-rows" data-day="${di}">
-          ${(d.items || []).map((item, ii) => renderExerciseRow(item, di, ii)).join('')}
-        </div>
-        <button class="btn btn-tonal sm add-exercise-btn" data-day="${di}" style="margin-top:8px;">
-          <span class="material-symbols-rounded">add</span>Add Exercise
-        </button>
+        <div class="body" style="font-size:11px; margin-bottom:6px;">One exercise per line — Exercise | Muscle Group | Machine | Sets</div>
+        <textarea class="day-exercises" rows="4" style="width:100%; font-family:'JetBrains Mono',monospace; font-size:12px;"
+          placeholder="Bench Press | Chest | Barbell | 4x8">${itemsToText(d.items)}</textarea>
       </div>
     `).join('');
-
-    ewDays.querySelectorAll('.add-exercise-btn').forEach(btn => {
-      btn.addEventListener('click', () => addExerciseRow(parseInt(btn.dataset.day, 10)));
-    });
-    ewDays.querySelectorAll('.remove-exercise-btn').forEach(btn => {
-      btn.addEventListener('click', () => btn.closest('.exercise-row-wrap').remove());
-    });
 
     closeModal('client-modal');
     openModal('edit-workout-modal');
   }
 
-  function renderExerciseRow(item, dayIdx, itemIdx) {
-    const ex = typeof item === 'string' ? { exercise: item, muscleGroup: '', machine: '', sets: '' } : item;
-    return `
-      <div class="exercise-row-wrap" style="display:grid; grid-template-columns:1fr 120px 140px 90px 32px; gap:6px; margin-bottom:6px; align-items:center;">
-        <input type="text" class="ex-name-input" placeholder="Exercise name" value="${ex.exercise || ''}" style="font-size:13px;" />
-        <input type="text" class="ex-muscle-input" placeholder="Muscle group" value="${ex.muscleGroup || ''}" style="font-size:13px;" />
-        <input type="text" class="ex-machine-input" placeholder="Equipment" value="${ex.machine || ''}" style="font-size:13px;" />
-        <input type="text" class="ex-sets-input" placeholder="Sets (e.g. 3×10)" value="${ex.sets || ''}" style="font-size:13px; font-family: monospace;" />
-        <button class="btn btn-text icon sm remove-exercise-btn" title="Remove">
-          <span class="material-symbols-rounded" style="font-size:16px;">close</span>
-        </button>
-      </div>
-    `;
+  // Same "Exercise | Muscle Group | Machine | Sets" plain-text line format
+  // the app and admin dashboard both use, keeping the JSON shape identical.
+  function itemsToText(items) {
+    return (items || []).map(i => {
+      const it = typeof i === 'string' ? { exercise: i } : i;
+      return [it.exercise, it.muscleGroup, it.machine, it.sets].filter(Boolean).join(' | ');
+    }).join('\n');
   }
-
-  function addExerciseRow(dayIdx) {
-    const container = document.querySelector(`.exercise-rows[data-day="${dayIdx}"]`);
-    const wrap = document.createElement('div');
-    wrap.innerHTML = renderExerciseRow({}, dayIdx, -1);
-    const row = wrap.firstElementChild;
-    row.querySelector('.remove-exercise-btn').addEventListener('click', () => row.remove());
-    container.appendChild(row);
+  function textToItems(text) {
+    return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const [exercise, muscleGroup, machine, sets] = line.split('|').map(s => (s || '').trim());
+      return { exercise: exercise || line, muscleGroup: muscleGroup || '', machine: machine || '', sets: sets || '' };
+    });
   }
 
   function collectWorkoutPlan() {
@@ -529,35 +517,39 @@
     const dayCards = document.querySelectorAll('#ew-days [data-day-idx]');
     const days = Array.from(dayCards).map((card, di) => {
       const focus = card.querySelector('.day-focus').value.trim();
-      const rows = card.querySelectorAll('.exercise-row-wrap');
-      const items = Array.from(rows).map(row => {
-        const exercise = row.querySelector('.ex-name-input').value.trim();
-        if (!exercise) return null;
-        return {
-          exercise,
-          muscleGroup: row.querySelector('.ex-muscle-input').value.trim(),
-          machine: row.querySelector('.ex-machine-input').value.trim(),
-          sets: row.querySelector('.ex-sets-input').value.trim(),
-        };
-      }).filter(Boolean);
+      const items = textToItems(card.querySelector('.day-exercises').value);
       return { day: DAYS[di], focus, items };
     });
     return { name, assignedBy, days };
   }
 
+  // Save always sends too — a separate second click to send just added
+  // friction with no real use case (why save a plan without telling the
+  // client it changed?).
   document.getElementById('ew-save').addEventListener('click', async () => {
-    const plan = collectWorkoutPlan();
-    await api(withTrainerParam(`/api/trainer/clients/${activeClient.id}/workout`), { method: 'PUT', body: plan });
-    activeClient.workoutPlan = plan;
-    renderClientWorkout(activeClient);
-    // Update summary card chip
-    const card = document.querySelector(`[data-client-id="${activeClient.id}"]`);
-    if (card) {
-      const chip = card.querySelectorAll('.chip')[0];
-      if (chip) { chip.className = 'chip success'; chip.innerHTML = '<span class="material-symbols-rounded" style="font-size:13px;">fitness_center</span> Workout set'; }
+    const btn = document.getElementById('ew-save');
+    btn.disabled = true;
+    try {
+      const plan = collectWorkoutPlan();
+      await api(withTrainerParam(`/api/trainer/clients/${activeClient.id}/workout`), { method: 'PUT', body: plan });
+      activeClient.workoutPlan = plan;
+      renderClientWorkout(activeClient);
+      const card = document.querySelector(`[data-client-id="${activeClient.id}"]`);
+      if (card) {
+        const chip = card.querySelectorAll('.chip')[0];
+        if (chip) { chip.className = 'chip success'; chip.innerHTML = '<span class="material-symbols-rounded" style="font-size:13px;">fitness_center</span> Workout set'; }
+      }
+      closeModal('edit-workout-modal');
+      openModal('client-modal');
+
+      const result = await api(withTrainerParam(`/api/trainer/clients/${activeClient.id}/workout/whatsapp`), { method: 'POST' });
+      if (result.mode === 'api') alert(`✅ Workout plan saved and sent to ${activeClient.name} on WhatsApp (${result.phone}).`);
+      else window.open(result.link, '_blank', 'noopener');
+    } catch (e) {
+      alert(`Could not save/send: ${e.message}`);
+    } finally {
+      btn.disabled = false;
     }
-    closeModal('edit-workout-modal');
-    openModal('client-modal');
   });
 
   // ---- Edit Nutrition
@@ -598,28 +590,40 @@
 
   document.getElementById('en-add-meal').addEventListener('click', () => addMealRow());
 
+  // Save always sends too — same reasoning as the workout editor above.
   document.getElementById('en-save').addEventListener('click', async () => {
-    const plan = {
-      calories: parseInt(document.getElementById('en-calories').value, 10) || 0,
-      protein:  parseInt(document.getElementById('en-protein').value, 10)  || 0,
-      carbs:    parseInt(document.getElementById('en-carbs').value, 10)    || 0,
-      fats:     parseInt(document.getElementById('en-fats').value, 10)     || 0,
-      meals: Array.from(document.querySelectorAll('#en-meals > div')).map(row => ({
-        name:  row.querySelector('.meal-name-input').value.trim(),
-        items: row.querySelector('.meal-items-input').value.trim(),
-      })).filter(m => m.name),
-    };
-    await api(withTrainerParam(`/api/trainer/clients/${activeClient.id}/nutrition`), { method: 'PUT', body: plan });
-    activeClient.nutritionPlan = plan;
-    renderClientNutrition(activeClient);
-    // Update summary card chip
-    const card = document.querySelector(`[data-client-id="${activeClient.id}"]`);
-    if (card) {
-      const chip = card.querySelectorAll('.chip')[1];
-      if (chip) { chip.className = 'chip success'; chip.innerHTML = '<span class="material-symbols-rounded" style="font-size:13px;">nutrition</span> Nutrition set'; }
+    const btn = document.getElementById('en-save');
+    btn.disabled = true;
+    try {
+      const plan = {
+        calories: parseInt(document.getElementById('en-calories').value, 10) || 0,
+        protein:  parseInt(document.getElementById('en-protein').value, 10)  || 0,
+        carbs:    parseInt(document.getElementById('en-carbs').value, 10)    || 0,
+        fats:     parseInt(document.getElementById('en-fats').value, 10)     || 0,
+        meals: Array.from(document.querySelectorAll('#en-meals > div')).map(row => ({
+          name:  row.querySelector('.meal-name-input').value.trim(),
+          items: row.querySelector('.meal-items-input').value.trim(),
+        })).filter(m => m.name),
+      };
+      await api(withTrainerParam(`/api/trainer/clients/${activeClient.id}/nutrition`), { method: 'PUT', body: plan });
+      activeClient.nutritionPlan = plan;
+      renderClientNutrition(activeClient);
+      const card = document.querySelector(`[data-client-id="${activeClient.id}"]`);
+      if (card) {
+        const chip = card.querySelectorAll('.chip')[1];
+        if (chip) { chip.className = 'chip success'; chip.innerHTML = '<span class="material-symbols-rounded" style="font-size:13px;">nutrition</span> Nutrition set'; }
+      }
+      closeModal('edit-nutrition-modal');
+      openModal('client-modal');
+
+      const result = await api(withTrainerParam(`/api/trainer/clients/${activeClient.id}/nutrition/whatsapp`), { method: 'POST' });
+      if (result.mode === 'api') alert(`✅ Diet plan saved and sent to ${activeClient.name} on WhatsApp (${result.phone}).`);
+      else window.open(result.link, '_blank', 'noopener');
+    } catch (e) {
+      alert(`Could not save/send: ${e.message}`);
+    } finally {
+      btn.disabled = false;
     }
-    closeModal('edit-nutrition-modal');
-    openModal('client-modal');
   });
 
   // ---- Send diet plan on WhatsApp

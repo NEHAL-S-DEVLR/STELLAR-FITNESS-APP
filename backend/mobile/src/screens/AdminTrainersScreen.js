@@ -100,19 +100,21 @@ export default function AdminTrainersScreen({ navigation, route }) {
           {trainers.length === 0 ? (
             <Empty icon={<Ionicons name="body-outline" size={30} color={colors.outline} />} text="No trainers yet." />
           ) : trainers.map((t) => (
-            <Card key={t.id} style={{ marginBottom: 10 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>{t.name}</Text>
-                  <Text style={styles.sub}>{t.specialization || 'No specialization set'}</Text>
+            <TouchableOpacity key={t.id} activeOpacity={0.8} onPress={() => navigation.navigate('AdminTrainerDetail', { trainer: t })}>
+              <Card style={{ marginBottom: 10 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.name}>{t.name}</Text>
+                    <Text style={styles.sub}>{t.specialization || 'No specialization set'}</Text>
+                  </View>
+                  <Chip label={t.is_partner ? 'Partner · 100%' : `${t.membership_rate ?? t.pt_rate ?? ''}%`} tone="primary" />
                 </View>
-                <Chip label={t.is_partner ? 'Partner · 100%' : `${t.membership_rate ?? t.pt_rate ?? ''}%`} tone="primary" />
-              </View>
-              <View style={{ flexDirection: 'row', gap: 16, marginTop: 10 }}>
-                <Text style={styles.stat}>{money(t.revenue)} revenue (MTD)</Text>
-                <Text style={styles.stat}>{money(t.commission)} commission</Text>
-              </View>
-            </Card>
+                <View style={{ flexDirection: 'row', gap: 16, marginTop: 10 }}>
+                  <Text style={styles.stat}>{money(t.revenue)} revenue (MTD)</Text>
+                  <Text style={styles.stat}>{money(t.commission)} commission</Text>
+                </View>
+              </Card>
+            </TouchableOpacity>
           ))}
         </>
       )}

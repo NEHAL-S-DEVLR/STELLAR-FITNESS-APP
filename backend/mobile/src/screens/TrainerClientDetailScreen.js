@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card, Chip, SectionTitle, Button } from '../components/Common';
 import { colors, radius, spacing } from '../theme';
@@ -35,7 +35,6 @@ export default function TrainerClientDetailScreen({ route }) {
   const [dayFocus, setDayFocus] = useState({});
   const [dayText, setDayText] = useState({});
   const [savingWorkout, setSavingWorkout] = useState(false);
-  const [sendingWorkout, setSendingWorkout] = useState(false);
 
   const [calories, setCalories] = useState('');
   const [protein, setProtein] = useState('');
@@ -43,7 +42,6 @@ export default function TrainerClientDetailScreen({ route }) {
   const [fats, setFats] = useState('');
   const [mealsText, setMealsText] = useState('');
   const [savingNutrition, setSavingNutrition] = useState(false);
-  const [sendingNutrition, setSendingNutrition] = useState(false);
 
   useEffect(() => {
     api(withTrainerParam(`/api/trainer/clients/${clientId}`))
@@ -73,25 +71,17 @@ export default function TrainerClientDetailScreen({ route }) {
     };
   }
 
+  // Save always sends too — a separate second tap just added friction with
+  // no real use case (why save a plan without telling the client it
+  // changed?), so this now does both in one action.
   async function saveWorkout() {
     setSavingWorkout(true);
     try {
       await api(withTrainerParam(`/api/trainer/clients/${clientId}/workout`), { method: 'PUT', body: buildWorkoutPlan() });
-      Alert.alert('Saved', 'Workout plan updated.');
-    } catch (e) { Alert.alert('Could not save', e.message); } finally { setSavingWorkout(false); }
-  }
-
-  async function sendWorkout() {
-    setSendingWorkout(true);
-    try {
-      await saveWorkoutSilently();
       const res = await api(withTrainerParam(`/api/trainer/clients/${clientId}/workout/whatsapp`), { method: 'POST' });
-      if (res.mode === 'link' && res.link) Alert.alert('Open WhatsApp', 'Tap OK, then send the pre-filled message.', [{ text: 'OK' }]);
-      else Alert.alert('Sent', 'Workout plan sent on WhatsApp.');
-    } catch (e) { Alert.alert('Could not send', e.message); } finally { setSendingWorkout(false); }
-  }
-  async function saveWorkoutSilently() {
-    await api(withTrainerParam(`/api/trainer/clients/${clientId}/workout`), { method: 'PUT', body: buildWorkoutPlan() });
+      if (res.mode === 'link' && res.link) Linking.openURL(res.link);
+      else Alert.alert('Saved & Sent', 'Workout plan updated and sent on WhatsApp.');
+    } catch (e) { Alert.alert('Could not save', e.message); } finally { setSavingWorkout(false); }
   }
 
   function buildNutritionPlan() {
@@ -111,18 +101,10 @@ export default function TrainerClientDetailScreen({ route }) {
     setSavingNutrition(true);
     try {
       await api(withTrainerParam(`/api/trainer/clients/${clientId}/nutrition`), { method: 'PUT', body: buildNutritionPlan() });
-      Alert.alert('Saved', 'Nutrition plan updated.');
-    } catch (e) { Alert.alert('Could not save', e.message); } finally { setSavingNutrition(false); }
-  }
-
-  async function sendNutrition() {
-    setSendingNutrition(true);
-    try {
-      await api(withTrainerParam(`/api/trainer/clients/${clientId}/nutrition`), { method: 'PUT', body: buildNutritionPlan() });
       const res = await api(withTrainerParam(`/api/trainer/clients/${clientId}/nutrition/whatsapp`), { method: 'POST' });
-      if (res.mode === 'link' && res.link) Alert.alert('Open WhatsApp', 'Tap OK, then send the pre-filled message.', [{ text: 'OK' }]);
-      else Alert.alert('Sent', 'Nutrition plan sent on WhatsApp.');
-    } catch (e) { Alert.alert('Could not send', e.message); } finally { setSendingNutrition(false); }
+      if (res.mode === 'link' && res.link) Linking.openURL(res.link);
+      else Alert.alert('Saved & Sent', 'Nutrition plan updated and sent on WhatsApp.');
+    } catch (e) { Alert.alert('Could not save', e.message); } finally { setSavingNutrition(false); }
   }
 
   if (error) return <View style={styles.center}><Text style={styles.error}>{error}</Text></View>;
@@ -162,16 +144,11 @@ export default function TrainerClientDetailScreen({ route }) {
           placeholder={'Bench Press | Chest | Barbell | 4x8\nLat Pulldown | Back | Cable | 3x12'}
           placeholderTextColor={colors.outline}
         />
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-          <View style={{ flex: 1 }}>
-            <Button label={savingWorkout ? '' : 'Save'} variant="tonal" onPress={saveWorkout} disabled={savingWorkout}
-              icon={savingWorkout ? <ActivityIndicator color={colors.onPrimaryContainer} /> : <Ionicons name="save" size={16} color={colors.onPrimaryContainer} />} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Button label={sendingWorkout ? '' : 'Save & Send'} onPress={sendWorkout} disabled={sendingWorkout}
-              icon={sendingWorkout ? <ActivityIndicator color={colors.onPrimary} /> : <Ionicons name="logo-whatsapp" size={16} color={colors.onPrimary} />} />
-          </View>
-        </View>
+        <Button
+          label={savingWorkout ? '' : 'Save & Send'} onPress={saveWorkout} disabled={savingWorkout}
+          icon={savingWorkout ? <ActivityIndicator color={colors.onPrimary} /> : <Ionicons name="logo-whatsapp" size={16} color={colors.onPrimary} />}
+          style={{ marginTop: 14 }}
+        />
       </Card>
 
       <SectionTitle>Nutrition Plan</SectionTitle>
@@ -191,16 +168,11 @@ export default function TrainerClientDetailScreen({ route }) {
           placeholder={'Breakfast | Oats with banana and protein shake\nLunch | Grilled chicken, rice, vegetables'}
           placeholderTextColor={colors.outline}
         />
-        <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-          <View style={{ flex: 1 }}>
-            <Button label={savingNutrition ? '' : 'Save'} variant="tonal" onPress={saveNutrition} disabled={savingNutrition}
-              icon={savingNutrition ? <ActivityIndicator color={colors.onPrimaryContainer} /> : <Ionicons name="save" size={16} color={colors.onPrimaryContainer} />} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Button label={sendingNutrition ? '' : 'Save & Send'} onPress={sendNutrition} disabled={sendingNutrition}
-              icon={sendingNutrition ? <ActivityIndicator color={colors.onPrimary} /> : <Ionicons name="logo-whatsapp" size={16} color={colors.onPrimary} />} />
-          </View>
-        </View>
+        <Button
+          label={savingNutrition ? '' : 'Save & Send'} onPress={saveNutrition} disabled={savingNutrition}
+          icon={savingNutrition ? <ActivityIndicator color={colors.onPrimary} /> : <Ionicons name="logo-whatsapp" size={16} color={colors.onPrimary} />}
+          style={{ marginTop: 14 }}
+        />
       </Card>
     </ScrollView>
   );

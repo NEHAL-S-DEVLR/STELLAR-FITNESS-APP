@@ -38,6 +38,11 @@ export default function Home() {
   return (
     <div className="overflow-x-clip">
       <section className="relative flex min-h-[92vh] items-center overflow-hidden border-b border-white/10 bg-black">
+        <img
+          src="/gallery/main-training-floor.jpg"
+          alt="Stellar Fitness Club training floor"
+          className="absolute inset-0 h-full w-full object-cover opacity-50"
+        />
         <Parallax
           speed={0.4}
           className="pointer-events-none absolute inset-0 flex items-center justify-center"
@@ -47,7 +52,7 @@ export default function Home() {
           </span>
         </Parallax>
 
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-950/20 via-black/60 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/75 to-black" />
 
         <div className="relative mx-auto max-w-6xl px-6 py-32">
           <Reveal>
@@ -134,6 +139,53 @@ export default function Home() {
             >
               <h3 className="text-lg font-bold text-white">{item.title}</h3>
               <p className="mt-2 text-sm text-zinc-400">{item.body}</p>
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
+      </section>
+
+      <section className="border-y border-white/10 bg-black py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <Reveal className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-500">
+                Inside Stellar
+              </p>
+              <h2 className="font-display mt-3 text-4xl text-white sm:text-5xl">
+                The floor, in real life
+              </h2>
+            </div>
+            <Link
+              href="/gallery"
+              className="text-sm font-bold uppercase tracking-wide text-blue-500 hover:text-blue-400"
+            >
+              View full gallery →
+            </Link>
+          </Reveal>
+        </div>
+
+        <StaggerGroup className="mx-auto mt-12 grid max-w-6xl auto-rows-[140px] grid-cols-2 gap-3 px-6 sm:auto-rows-[180px] sm:grid-cols-4">
+          {[
+            { file: "cardio-deck-view.jpg", title: "Cardio deck", span: "col-span-2 row-span-2" },
+            { file: "dumbbell-rack.jpg", title: "Free weight wall", span: "" },
+            { file: "functional-bay-red-beams.jpg", title: "Functional bay", span: "" },
+            { file: "squat-rack-bench.jpg", title: "Squat rack", span: "row-span-2" },
+            { file: "locker-room.jpg", title: "Locker room", span: "" },
+            { file: "smith-machine.jpg", title: "Smith machine", span: "" },
+          ].map((img) => (
+            <StaggerItem
+              key={img.file}
+              className={`group relative overflow-hidden rounded-xl border border-white/10 ${img.span}`}
+            >
+              <img
+                src={`/gallery/${img.file}`}
+                alt={img.title}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              <span className="absolute bottom-3 left-3 text-xs font-bold uppercase tracking-wide text-white/90">
+                {img.title}
+              </span>
             </StaggerItem>
           ))}
         </StaggerGroup>

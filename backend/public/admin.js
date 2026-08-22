@@ -871,6 +871,14 @@
     const catEl = document.getElementById('md-bmi-cat');
     catEl.textContent = cat.label; catEl.style.color = cat.color;
 
+    // Workout/Nutrition tabs only make sense for PT clients — everyone else
+    // is on the shared level plan (Plans > Default Workout), not a personal
+    // one. Members list already tags this on the fullUser() response.
+    const workoutTab = document.querySelector('[data-mtab="workout"]');
+    const nutritionTab = document.querySelector('[data-mtab="nutrition"]');
+    workoutTab.style.display = u.onPt ? '' : 'none';
+    nutritionTab.style.display = u.onPt ? '' : 'none';
+
     // Subscription
     document.getElementById('sub-plan').value   = u.subscription?.plan       || '';
     document.getElementById('sub-start').value  = u.subscription?.startDate  || '';
@@ -974,85 +982,42 @@
     });
   }
 
-  // ---- Structured workout plan editor
+  // ---- Plain-text workout plan editor — one paragraph per day, no
+  // muscle-group/machine dropdowns. Same "Exercise | Muscle Group | Machine
+  // | Sets" line format the app and trainer-portal both use, so the exact
+  // same JSON shape and message-building code works everywhere unchanged.
+  function itemsToText(items) {
+    return (items || []).map(i => [i.exercise, i.muscleGroup, i.machine, i.sets].filter(Boolean).join(' | ')).join('\n');
+  }
+  function textToItems(text) {
+    return text.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const [exercise, muscleGroup, machine, sets] = line.split('|').map(s => (s || '').trim());
+      return { exercise: exercise || line, muscleGroup: muscleGroup || '', machine: machine || '', sets: sets || '' };
+    });
+  }
+
   function renderPlanEditor() {
     const c = document.getElementById('wp-day-cards');
-    c.innerHTML = editingPlan.days.map((d, di) => {
-      const items = d.items.map((it, ii) => `
-        <div class="exercise-row">
-          ${it.muscleGroup ? `<span class="chip primary">${it.muscleGroup}</span>` : ''}
-          <span class="ex-name">${it.exercise}</span>
-          ${it.machine ? `<span class="chip info">${it.machine}</span>` : ''}
-          <span class="sets">${it.sets || ''}</span>
-          <button class="btn btn-text sm icon" data-rm="${di}|${ii}"><span class="material-symbols-rounded">close</span></button>
+    c.innerHTML = editingPlan.days.map((d, di) => `
+      <div class="plan-day">
+        <div class="head">
+          <div class="day-name">${d.day}</div>
+          <input type="text" placeholder="Focus (e.g. Push, Legs, Rest)" data-focus="${di}" value="${d.focus || ''}" />
         </div>
-      `).join('') || '<div class="body" style="font-size: 12px; padding: 6px 0;">No exercises yet.</div>';
-      const muscleOpts = Object.keys(EXERCISE_LIBRARY).map(g => `<option value="${g}">${g}</option>`).join('');
-      return `
-        <div class="plan-day">
-          <div class="head">
-            <div class="day-name">${d.day}</div>
-            <input type="text" placeholder="Focus (e.g. Push, Legs, Rest)" data-focus="${di}" value="${d.focus || ''}" />
-          </div>
-          ${items}
-          <div class="add-ex-form" data-add="${di}">
-            <select data-field="muscle"><option value="">Muscle group…</option>${muscleOpts}</select>
-            <select data-field="exercise" disabled><option value="">Exercise…</option></select>
-            <select data-field="machine" disabled><option value="">Machine…</option></select>
-            <input type="text" data-field="sets" placeholder="4 x 8" />
-            <button class="btn btn-tonal sm" data-add-btn="${di}">Add</button>
-          </div>
-        </div>
-      `;
-    }).join('');
+        <div class="body" style="font-size: 11px; margin-bottom: 6px;">One exercise per line — Exercise | Muscle Group | Machine | Sets</div>
+        <textarea data-exercises="${di}" rows="4" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; width: 100%;"
+          placeholder="Bench Press | Chest | Barbell | 4x8">${itemsToText(d.items)}</textarea>
+      </div>
+    `).join('');
 
     c.querySelectorAll('[data-focus]').forEach(inp => {
       inp.addEventListener('input', () => {
         editingPlan.days[parseInt(inp.dataset.focus)].focus = inp.value;
       });
     });
-    c.querySelectorAll('[data-rm]').forEach(b => {
-      b.addEventListener('click', () => {
-        const [di, ii] = b.dataset.rm.split('|').map(Number);
-        editingPlan.days[di].items.splice(ii, 1);
-        renderPlanEditor();
-      });
-    });
-    c.querySelectorAll('[data-add]').forEach(form => {
-      const mSel = form.querySelector('[data-field=muscle]');
-      const eSel = form.querySelector('[data-field=exercise]');
-      const machSel = form.querySelector('[data-field=machine]');
-      mSel.addEventListener('change', () => {
-        const m = mSel.value;
-        eSel.innerHTML = '<option value="">Exercise…</option>';
-        machSel.innerHTML = '<option value="">Machine…</option>';
-        machSel.disabled = true;
-        if (m) {
-          (EXERCISE_LIBRARY[m] || []).forEach(x => eSel.innerHTML += `<option value="${x.name}">${x.name}</option>`);
-          eSel.disabled = false;
-        } else { eSel.disabled = true; }
-      });
-      eSel.addEventListener('change', () => {
-        const m = mSel.value, e = eSel.value;
-        machSel.innerHTML = '<option value="">Machine…</option>';
-        const ex = (EXERCISE_LIBRARY[m] || []).find(x => x.name === e);
-        if (ex) {
-          ex.machines.forEach(mach => machSel.innerHTML += `<option value="${mach}">${mach}</option>`);
-          machSel.disabled = false;
-        } else { machSel.disabled = true; }
-      });
-    });
-    c.querySelectorAll('[data-add-btn]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const di = parseInt(btn.dataset.addBtn);
-        const form = c.querySelector(`[data-add="${di}"]`);
-        const muscleGroup = form.querySelector('[data-field=muscle]').value;
-        const exercise    = form.querySelector('[data-field=exercise]').value;
-        const machine     = form.querySelector('[data-field=machine]').value;
-        const sets        = form.querySelector('[data-field=sets]').value.trim();
-        if (!muscleGroup || !exercise) return alert('Pick a muscle group and exercise.');
-        editingPlan.days[di].items.push({ muscleGroup, exercise, machine, sets });
-        renderPlanEditor();
+    c.querySelectorAll('[data-exercises]').forEach(ta => {
+      ta.addEventListener('input', () => {
+        editingPlan.days[parseInt(ta.dataset.exercises)].items = textToItems(ta.value);
       });
     });
   }
@@ -1311,6 +1276,10 @@
     await loadAll();
   });
 
+  // Save always sends too — same reasoning as the trainer portal. Uses the
+  // member's assigned trainer's identity for the WhatsApp send (the
+  // trainer-scoped endpoint, admin-bypassed via ?trainerId=), since these
+  // admin-direct PUTs have no send endpoint of their own.
   document.getElementById('wp-save').addEventListener('click', async () => {
     const name = document.getElementById('wp-name').value.trim();
     if (!name) return alert('Give the plan a name.');
@@ -1318,9 +1287,23 @@
     if (totalItems === 0) return alert('Add at least one exercise.');
     editingPlan.name = name;
     editingPlan.assignedBy = me.name;
-    await api(`/api/admin/members/${editingMember.id}/workout`, { method: 'PUT', body: editingPlan });
-    alert('Workout plan saved.');
-    await loadAll();
+    const btn = document.getElementById('wp-save');
+    btn.disabled = true;
+    try {
+      await api(`/api/admin/members/${editingMember.id}/workout`, { method: 'PUT', body: editingPlan });
+      await loadAll();
+      if (editingMember.assignedTrainerId) {
+        const result = await api(`/api/trainer/clients/${editingMember.id}/workout/whatsapp?trainerId=${editingMember.assignedTrainerId}`, { method: 'POST' });
+        if (result.mode === 'api') alert(`✅ Workout plan saved and sent to ${editingMember.name} on WhatsApp (${result.phone}).`);
+        else window.open(result.link, '_blank', 'noopener');
+      } else {
+        alert('Workout plan saved. No trainer assigned, so it could not be sent — assign one to enable WhatsApp send.');
+      }
+    } catch (e) {
+      alert(`Could not save/send: ${e.message}`);
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   document.getElementById('np-save').addEventListener('click', async () => {
@@ -1329,17 +1312,31 @@
       return { name, items: items || '' };
     });
     if (!meals.length) return alert('Add at least one meal.');
-    await api(`/api/admin/members/${editingMember.id}/nutrition`, {
-      method: 'PUT',
-      body: {
-        calories: parseInt(document.getElementById('np-cal').value) || 0,
-        protein:  parseInt(document.getElementById('np-pro').value) || 0,
-        carbs:    parseInt(document.getElementById('np-carb').value) || 0,
-        fats:     parseInt(document.getElementById('np-fat').value) || 0,
-        meals,
-      },
-    });
-    alert('Nutrition plan saved.');
+    const btn = document.getElementById('np-save');
+    btn.disabled = true;
+    try {
+      await api(`/api/admin/members/${editingMember.id}/nutrition`, {
+        method: 'PUT',
+        body: {
+          calories: parseInt(document.getElementById('np-cal').value) || 0,
+          protein:  parseInt(document.getElementById('np-pro').value) || 0,
+          carbs:    parseInt(document.getElementById('np-carb').value) || 0,
+          fats:     parseInt(document.getElementById('np-fat').value) || 0,
+          meals,
+        },
+      });
+      if (editingMember.assignedTrainerId) {
+        const result = await api(`/api/trainer/clients/${editingMember.id}/nutrition/whatsapp?trainerId=${editingMember.assignedTrainerId}`, { method: 'POST' });
+        if (result.mode === 'api') alert(`✅ Nutrition plan saved and sent to ${editingMember.name} on WhatsApp (${result.phone}).`);
+        else window.open(result.link, '_blank', 'noopener');
+      } else {
+        alert('Nutrition plan saved. No trainer assigned, so it could not be sent — assign one to enable WhatsApp send.');
+      }
+    } catch (e) {
+      alert(`Could not save/send: ${e.message}`);
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   // Add member

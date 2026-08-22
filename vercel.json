@@ -24,7 +24,6 @@
     { "source": "/enquiries.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/expenses.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/expenses.js", "destination": { "type": "service", "service": "backend" } },
-    { "source": "/library.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/gallery-admin.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/gallery-admin.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/gym-pass.html", "destination": { "type": "service", "service": "backend" } },

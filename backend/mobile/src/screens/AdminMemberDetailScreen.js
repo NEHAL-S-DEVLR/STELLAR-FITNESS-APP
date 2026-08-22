@@ -15,6 +15,7 @@ export default function AdminMemberDetailScreen({ route, navigation }) {
   const [phone, setPhone] = useState('');
   const [goal, setGoal] = useState('');
   const [height, setHeight] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
   const [trainers, setTrainers] = useState([]);
   const [trainerId, setTrainerId] = useState(null);
   const [batches, setBatches] = useState([]);
@@ -30,6 +31,7 @@ export default function AdminMemberDetailScreen({ route, navigation }) {
         setPhone(m.phone || '');
         setGoal(m.goal || '');
         setHeight(m.height ? String(m.height) : '');
+        setPhotoUrl(m.photoUrl || '');
         setTrainerId(m.assignedTrainerId || null);
         setBatchId(m.batchId || null);
       })
@@ -56,7 +58,7 @@ export default function AdminMemberDetailScreen({ route, navigation }) {
         method: 'PATCH',
         body: {
           name: name.trim(), phone: phone.trim(), goal: goal.trim(),
-          height: parseFloat(height) || null,
+          height: parseFloat(height) || null, photo_url: photoUrl.trim() || null,
           assigned_trainer_id: trainerId, batch_id: batchId,
         },
       });
@@ -125,6 +127,7 @@ export default function AdminMemberDetailScreen({ route, navigation }) {
         <Field label="Phone (WhatsApp)"><TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholderTextColor={colors.outline} /></Field>
         <Field label="Goal"><TextInput style={styles.input} value={goal} onChangeText={setGoal} placeholderTextColor={colors.outline} /></Field>
         <Field label="Height (cm)"><TextInput style={styles.input} value={height} onChangeText={setHeight} keyboardType="numeric" placeholderTextColor={colors.outline} /></Field>
+        <Field label="Photo URL"><TextInput style={styles.input} value={photoUrl} onChangeText={setPhotoUrl} placeholder="https://…" placeholderTextColor={colors.outline} autoCapitalize="none" /></Field>
 
         <Text style={styles.label}>Assigned Trainer</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>

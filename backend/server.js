@@ -114,6 +114,9 @@ async function initSchema() {
       nutrition_plan_json JSONB
     );
     ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_level INTEGER NOT NULL DEFAULT 1;
+    ALTER TABLE users DROP CONSTRAINT IF EXISTS users_plan_level_check;
+    ALTER TABLE users ADD CONSTRAINT users_plan_level_check CHECK (plan_level BETWEEN 1 AND 4);
 
     CREATE TABLE IF NOT EXISTS attendance (
       user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -1379,6 +1382,7 @@ function toUser(row) {
     assignedTrainerId: row.assigned_trainer_id || null,
     memberType: row.member_type || 'regular',
     batchId: row.batch_id || null,
+    planLevel: row.plan_level || 1,
     permissions: row.permissions || [],
     // Trainer-specific fields (only meaningful when role === 'trainer')
     trainerCommissionRate: row.trainer_commission_rate != null ? parseFloat(row.trainer_commission_rate) : 10,
@@ -1427,8 +1431,9 @@ async function fullUser(id) {
       `SELECT 1 FROM pt_assignments WHERE user_id = $1 AND status IN ('active','completed') LIMIT 1`,
       [id]
     );
+    u.onPt = !!onPt;
     if (!onPt) {
-      u.workoutPlan = await getDefaultWorkoutPlan();
+      u.workoutPlan = await getDefaultWorkoutPlanForLevel(u.planLevel);
       u.nutritionPlan = null;
     }
   }
@@ -1587,6 +1592,22 @@ function requireTrainer(req, res, next) {
   next();
 }
 
+// A regular trainer cannot see how many PT clients they have or what they're
+// earning by default — only admin, or a trainer explicitly granted
+// 'trainer.earnings.view' at creation/edit time, can. This is a role check
+// PLUS a granular permission (not just requirePermission), since a trainer
+// is never "granted" access to their own account the way staff are granted
+// access to other people's data.
+async function requireTrainerEarningsAccess(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+  if (req.user.role === 'admin') return next();
+  if (req.user.role !== 'trainer') return res.status(403).json({ error: 'Trainer only' });
+  try {
+    if (await userHasPermission(req.user, 'trainer.earnings.view')) return next();
+    res.status(403).json({ error: 'You do not have permission to view earnings' });
+  } catch (e) { next(e); }
+}
+
 // ---- Granular permissions (staff accounts, and trainers granted extras) ----
 // Single source of truth: also served via GET /api/admin/permissions so the
 // "Add Trainer / Staff" UI can build its checklist from this list instead of
@@ -1603,6 +1624,7 @@ const PERMISSION_CATALOG = [
   { key: 'expenses.manage',    label: 'Manage expenses',              group: 'Money' },
   { key: 'finance.view',       label: 'View & record revenue/payments', group: 'Money' },
   { key: 'reports.view',       label: 'Reports (profit split, commissions)', group: 'Money' },
+  { key: 'trainer.earnings.view', label: "View own PT clients & earnings (trainers only)", group: 'Team' },
 ];
 const PERMISSION_KEYS = PERMISSION_CATALOG.map(p => p.key);
 const STAFF_DEFAULT_PERMISSIONS = ['members.manage', 'batches.manage', 'attendance.manage'];
@@ -2768,12 +2790,27 @@ app.delete('/api/admin/members/:id', auth, requirePermission('members.manage'), 
   res.json({ ok: true });
 }));
 
-app.put('/api/admin/members/:id/workout', auth, requireAdmin, wrap(async (req, res) => {
+// Same PT-assignment gate as the trainer-scoped versions of these routes —
+// this admin-direct path used to skip that check entirely, a real bypass of
+// the "only PT clients get a personal plan" rule (everyone else gets the
+// shared level plan; see fullUser()). A member with ANY active/completed
+// assignment (not necessarily to a specific trainer, since this is the
+// admin editing directly rather than "acting as" one trainer) qualifies.
+async function requireMemberOnPt(req, res, next) {
+  const ok = await q1(
+    `SELECT 1 FROM pt_assignments WHERE user_id = $1 AND status IN ('active','completed') LIMIT 1`,
+    [req.params.id]
+  );
+  if (!ok) return res.status(403).json({ error: 'Member is not on a PT package' });
+  next();
+}
+
+app.put('/api/admin/members/:id/workout', auth, requireAdmin, requireMemberOnPt, wrap(async (req, res) => {
   await pool.query('UPDATE users SET workout_plan_json = $1 WHERE id = $2', [req.body, req.params.id]);
   res.json({ ok: true });
 }));
 
-app.put('/api/admin/members/:id/nutrition', auth, requireAdmin, wrap(async (req, res) => {
+app.put('/api/admin/members/:id/nutrition', auth, requireAdmin, requireMemberOnPt, wrap(async (req, res) => {
   await pool.query('UPDATE users SET nutrition_plan_json = $1 WHERE id = $2', [req.body, req.params.id]);
   res.json({ ok: true });
 }));
@@ -3390,44 +3427,58 @@ app.get('/api/public/gallery', publicSiteCors, wrap(async (req, res) => {
   res.json(rows);
 }));
 
-// ============================== Default Workout Plan ==============================
-// Every member WITHOUT an active/completed PT assignment sees this one
-// shared plan (set by admin or a staff member granted 'workout.manage') —
-// PT clients keep getting their own trainer-written plan instead, never
-// this one. See fullUser() below for the fallback logic itself.
-const DEFAULT_WORKOUT_PLAN_KEY = 'default_workout_plan';
-const EMPTY_WORKOUT_PLAN = { name: 'Gym Standard Plan', assignedBy: 'Stellar Fitness Club', days: [] };
+// ============================== Default Workout Plans (4 levels) ==============================
+// Every member WITHOUT an active/completed PT assignment sees one of four
+// shared level plans (set by admin or a staff member granted
+// 'workout.manage') — PT clients keep getting their own trainer-written
+// plan instead, never one of these. New members default to Level 1; only
+// admin or a trainer can move someone to a different level (see
+// PATCH /api/admin/members/:id/plan-level below) — members can't pick their
+// own level. See fullUser() below for the plan-resolution logic itself.
+const DEFAULT_WORKOUT_PLANS_KEY = 'default_workout_plans';
+const PLAN_LEVEL_NAMES = { 1: 'Beginner', 2: 'Intermediate', 3: 'Advanced', 4: 'Elite' };
+const emptyLevelPlan = (level) => ({ level, name: PLAN_LEVEL_NAMES[level], assignedBy: 'Stellar Fitness Club', days: [] });
 
-async function getDefaultWorkoutPlan() {
+async function getDefaultWorkoutPlans() {
   // gym_settings.value is TEXT (pre-existing table, also used for
   // checkin_secret as a plain string) — not JSONB — so this needs an
   // explicit parse rather than relying on the driver to do it.
-  const row = await q1('SELECT value FROM gym_settings WHERE key = $1', [DEFAULT_WORKOUT_PLAN_KEY]);
-  if (!row?.value) return EMPTY_WORKOUT_PLAN;
-  try { return JSON.parse(row.value); } catch { return EMPTY_WORKOUT_PLAN; }
+  const row = await q1('SELECT value FROM gym_settings WHERE key = $1', [DEFAULT_WORKOUT_PLANS_KEY]);
+  let stored = [];
+  if (row?.value) { try { stored = JSON.parse(row.value); } catch { stored = []; } }
+  return [1, 2, 3, 4].map(level => stored.find(p => p.level === level) || emptyLevelPlan(level));
+}
+
+async function getDefaultWorkoutPlanForLevel(level) {
+  const plans = await getDefaultWorkoutPlans();
+  return plans.find(p => p.level === level) || emptyLevelPlan(1);
 }
 
 app.get('/api/admin/default-workout-plan', auth, requirePermission('workout.manage'), wrap(async (req, res) => {
-  res.json(await getDefaultWorkoutPlan());
+  res.json(await getDefaultWorkoutPlans());
 }));
 
-app.put('/api/admin/default-workout-plan', auth, requirePermission('workout.manage'), wrap(async (req, res) => {
-  const plan = { ...EMPTY_WORKOUT_PLAN, ...req.body, assignedBy: 'Stellar Fitness Club' };
+app.put('/api/admin/default-workout-plan/:level', auth, requirePermission('workout.manage'), wrap(async (req, res) => {
+  const level = parseInt(req.params.level, 10);
+  if (![1, 2, 3, 4].includes(level)) return res.status(400).json({ error: 'level must be 1-4' });
+  const plans = await getDefaultWorkoutPlans();
+  const updated = { ...emptyLevelPlan(level), ...req.body, level, assignedBy: 'Stellar Fitness Club' };
+  const next = plans.map(p => p.level === level ? updated : p);
   await pool.query(
     `INSERT INTO gym_settings (key, value) VALUES ($1,$2)
      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`,
-    [DEFAULT_WORKOUT_PLAN_KEY, JSON.stringify(plan)]
+    [DEFAULT_WORKOUT_PLANS_KEY, JSON.stringify(next)]
   );
   res.json({ ok: true });
 }));
 
-// Sends the current default plan to every active member who does NOT have
-// an active/completed PT assignment (those members use their trainer's own
-// send flow instead — sending them the default here would be misleading).
+// Sends each active non-PT member THEIR OWN level's plan (not the same
+// message to everyone) — those on a PT package use their trainer's own send
+// flow instead, sending them a level plan here would be misleading.
 app.post('/api/admin/default-workout-plan/whatsapp', auth, requirePermission('workout.manage'), wrap(async (req, res) => {
-  const plan = await getDefaultWorkoutPlan();
+  const plans = await getDefaultWorkoutPlans();
   const recipients = await q(`
-    SELECT u.id, u.name, u.phone FROM users u
+    SELECT u.id, u.name, u.phone, u.plan_level FROM users u
     WHERE u.role = 'member' AND u.phone IS NOT NULL AND u.phone <> ''
       AND u.subscription_expiry IS NOT NULL AND u.subscription_expiry >= $1
       AND NOT EXISTS (
@@ -3439,9 +3490,10 @@ app.post('/api/admin/default-workout-plan/whatsapp', auth, requirePermission('wo
   const results = [];
   for (const m of recipients) {
     try {
+      const plan = plans.find(p => p.level === (m.plan_level || 1)) || plans[0];
       const message = buildDefaultWorkoutPlanMessage({ memberName: m.name, plan });
       const r = await sendWhatsAppText({ phone: m.phone, message });
-      results.push({ memberId: m.id, name: m.name, phone: r.phone, mode: r.mode, link: r.link || null });
+      results.push({ memberId: m.id, name: m.name, phone: r.phone, mode: r.mode, link: r.link || null, level: m.plan_level || 1 });
     } catch (e) {
       results.push({ memberId: m.id, name: m.name, phone: m.phone, mode: 'error', error: e.message });
     }
@@ -3449,9 +3501,24 @@ app.post('/api/admin/default-workout-plan/whatsapp', auth, requirePermission('wo
 
   await pool.query(
     'INSERT INTO broadcasts (type, title, body, sent, recipients, sent_by) VALUES ($1,$2,$3,$4,$5,$6)',
-    ['whatsapp-default-workout', 'Default workout plan sent', plan.name || '', new Date().toISOString(), results.length, req.user.name]
+    ['whatsapp-default-workout', 'Default workout plans sent', '', new Date().toISOString(), results.length, req.user.name]
   );
   res.json({ results, waConfigured: WA_CONFIGURED });
+}));
+
+// Only admin or a trainer can move a member between the 4 shared plan
+// levels — members can't self-select. Deliberately a plain role check (not
+// requirePermission), since a trainer doing this isn't acting on a granted
+// permission the way staff act on members.manage — any trainer coaching the
+// gym floor can bump a member's level without going through admin.
+app.patch('/api/admin/members/:id/plan-level', auth, wrap(async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'trainer') {
+    return res.status(403).json({ error: 'Admin or trainer only' });
+  }
+  const level = parseInt(req.body?.plan_level, 10);
+  if (![1, 2, 3, 4].includes(level)) return res.status(400).json({ error: 'plan_level must be 1-4' });
+  await pool.query('UPDATE users SET plan_level = $1 WHERE id = $2 AND role = $3', [level, req.params.id, 'member']);
+  res.json({ ok: true });
 }));
 
 // ============================== Batches ==============================
@@ -4212,7 +4279,7 @@ app.get('/api/admin/reports/monthly-summary', auth, requirePermission('reports.v
 // A trainer's own earnings/commission — same numbers admin sees on the
 // Trainers page, just self-scoped (no trainers.manage permission needed) so
 // a trainer can check their own commission without asking admin.
-app.get('/api/trainer/stats', auth, requireTrainer, wrap(async (req, res) => {
+app.get('/api/trainer/stats', auth, requireTrainerEarningsAccess, wrap(async (req, res) => {
   const tid = effectiveTrainerId(req);
   const today      = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
