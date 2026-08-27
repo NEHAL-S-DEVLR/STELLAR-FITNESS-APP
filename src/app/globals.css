@@ -24,11 +24,58 @@ body {
 }
 
 .animate-marquee {
-  animation: marquee 24s linear infinite;
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes photo-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-photo-marquee {
+  animation: photo-marquee 50s linear infinite;
+}
+
+.animate-photo-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+
+.animate-kenburns {
+  animation: kenburns 16s ease-out forwards;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+.animate-bob {
+  animation: bob 2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .animate-photo-marquee,
+  .animate-kenburns,
+  .animate-bob {
     animation: none;
   }
 }
