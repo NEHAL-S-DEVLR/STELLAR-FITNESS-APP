@@ -10,21 +10,26 @@ const Auth = {
 
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  const hadToken = !!Auth.token;
   if (Auth.token) headers.Authorization = `Bearer ${Auth.token}`;
   const res = await fetch(path, {
     method: opts.method || 'GET',
     headers,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
-  if (res.status === 401) {
+  const ct = res.headers.get('content-type') || '';
+  const data = ct.includes('json') ? await res.json() : await res.text();
+  // A 401 on a request that carried a token means the session expired/was
+  // revoked — force back to login. A 401 with no token (e.g. a wrong-password
+  // login attempt) is a normal auth failure and must surface as an error
+  // message instead, or callers like the login form can never show it.
+  if (res.status === 401 && hadToken) {
     Auth.clear();
     if (!location.pathname.endsWith('/') && !location.pathname.endsWith('/index.html')) {
       location.href = '/';
     }
     throw new Error('Not authenticated');
   }
-  const ct = res.headers.get('content-type') || '';
-  const data = ct.includes('json') ? await res.json() : await res.text();
   if (!res.ok) throw new Error((data && data.error) || 'Request failed');
   return data;
 }

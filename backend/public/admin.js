@@ -864,6 +864,10 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 
     if (batchesCache.length === 0) { try { batchesCache = await api('/api/admin/batches'); } catch {} }
     fillBatchSelect(document.getElementById('md-batch'), u.batchId);
+    document.getElementById('md-plan-level').value = u.planLevel || 1;
+    // The plan level only matters for members on the shared default plan —
+    // members with an active PT package get their trainer's own plan instead.
+    document.getElementById('md-plan-level-field').style.display = u.onPt ? 'none' : '';
 
     const w = (u.weightLog && u.weightLog.length) ? u.weightLog[u.weightLog.length - 1].kg : null;
     document.getElementById('md-weight').textContent = w ? `${w.toFixed(1)} kg` : '—';
@@ -1253,6 +1257,12 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
           batch_id:                    document.getElementById('md-batch').value || null,
         },
       });
+      if (!editingMember.onPt) {
+        await api(`/api/admin/members/${editingMember.id}/plan-level`, {
+          method: 'PATCH',
+          body: { plan_level: parseInt(document.getElementById('md-plan-level').value, 10) },
+        });
+      }
     } catch (e) { alert(e.message); return; }
     closeModal('member-modal');
     await loadAll();

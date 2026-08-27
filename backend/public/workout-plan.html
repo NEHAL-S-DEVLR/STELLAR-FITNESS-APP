@@ -23,12 +23,17 @@
   <div class="container">
     <div style="margin-bottom: 24px;">
       <h1 class="display">Default Workout Plan</h1>
-      <div class="body">Every member without a PT package sees this one shared plan. PT clients keep getting their own trainer's plan from the Trainers page instead.</div>
+      <div class="body">Every member without a PT package is assigned one of 4 levels (Beginner → Elite) and sees that level's shared plan below. PT clients keep getting their own trainer's plan from the Trainers page instead.</div>
     </div>
 
     <div id="error-banner" class="error-banner"></div>
 
     <div class="card">
+      <div class="field">
+        <label>Level</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;" id="wp-level-tabs"></div>
+      </div>
+
       <div class="field">
         <label>Plan Name</label>
         <input type="text" id="wp-name" placeholder="e.g. Gym Standard Plan" />
