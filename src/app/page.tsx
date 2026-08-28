@@ -6,8 +6,8 @@ import { StaggerGroup, StaggerItem } from "@/components/motion/Stagger";
 import AnimatedCounter from "@/components/motion/AnimatedCounter";
 import Marquee from "@/components/Marquee";
 import PhotoMarquee from "@/components/PhotoMarquee";
+import HomeTrainers from "@/components/HomeTrainers";
 import { CLASSES } from "@/lib/classes";
-import { TRAINERS } from "@/lib/trainers";
 import { REVIEWS } from "@/lib/reviews";
 
 const STATS = [
@@ -290,24 +290,7 @@ export default function Home() {
           </Link>
         </Reveal>
 
-        <StaggerGroup className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {TRAINERS.slice(0, 4).map((trainer) => (
-            <StaggerItem key={trainer.slug}>
-              <Link
-                href={`/trainers/${trainer.slug}`}
-                className="group block rounded-2xl border border-white/10 bg-zinc-950 p-6 text-center transition-all duration-300 hover:-translate-y-1.5 hover:border-blue-500/40"
-              >
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-600/10 text-lg font-extrabold text-blue-500 ring-2 ring-blue-600/0 transition-all duration-300 group-hover:scale-110 group-hover:bg-blue-600/20 group-hover:ring-blue-500/60">
-                  {trainer.initials}
-                </div>
-                <h3 className="mt-4 font-bold text-white">{trainer.name}</h3>
-                <p className="mt-1 text-xs uppercase tracking-wide text-zinc-500">
-                  {trainer.role}
-                </p>
-              </Link>
-            </StaggerItem>
-          ))}
-        </StaggerGroup>
+        <HomeTrainers />
       </section>
 
       <section className="border-y border-white/10 bg-zinc-950 py-24">

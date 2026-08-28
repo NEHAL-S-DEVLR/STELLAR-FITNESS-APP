@@ -3443,6 +3443,47 @@ app.get('/api/public/gallery', publicSiteCors, wrap(async (req, res) => {
   res.json(rows);
 }));
 
+// ============================== Public Trainers (marketing site) ==============================
+// Real trainer accounts, added by the admin from Trainers & Staff, surfaced
+// on the public site the same way gallery photos are — no separate content
+// to maintain, the roster the visitor sees is exactly the roster the gym runs.
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+app.get('/api/public/trainers', publicSiteCors, wrap(async (req, res) => {
+  const rows = await q(`
+    SELECT id, name,
+           photo_url               AS "photoUrl",
+           trainer_specialization  AS specialization,
+           trainer_bio             AS bio
+    FROM users WHERE role = 'trainer' ORDER BY name
+  `);
+  res.json(rows);
+}));
+
+app.get('/api/public/trainers/:id', publicSiteCors, wrap(async (req, res) => {
+  const trainer = await q1(`
+    SELECT id, name,
+           photo_url               AS "photoUrl",
+           trainer_specialization  AS specialization,
+           trainer_bio             AS bio,
+           trainer_qualifications  AS qualifications,
+           trainer_achievements    AS achievements,
+           trainer_certificate_url AS "certificateUrl",
+           trainer_instagram       AS instagram
+    FROM users WHERE id = $1 AND role = 'trainer'
+  `, [req.params.id]);
+  if (!trainer) return res.status(404).json({ error: 'Trainer not found' });
+
+  const hours = await q(
+    `SELECT day_of_week AS "dayOfWeek", start_time AS "startTime", end_time AS "endTime"
+     FROM trainer_working_hours WHERE trainer_id = $1 AND is_active ORDER BY day_of_week`,
+    [req.params.id]
+  );
+  trainer.workingHours = hours.map(h => ({ day: WEEKDAY_NAMES[h.dayOfWeek], startTime: h.startTime, endTime: h.endTime }));
+
+  res.json(trainer);
+}));
+
 // ============================== Reel Requests ==============================
 // A member asks to be filmed for a promo reel, and/or pastes the URL of a
 // finished reel (their own, or the one Stellar shot for them). Admin/staff

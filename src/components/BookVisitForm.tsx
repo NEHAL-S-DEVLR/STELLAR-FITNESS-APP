@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { TRAINERS } from "@/lib/trainers";
 
 const GOALS = [
   "Lose weight",
@@ -12,12 +11,14 @@ const GOALS = [
 ];
 
 type Plan = { id: number; name: string; price: number; duration_days: number };
+type Trainer = { id: number; name: string; specialization: string | null };
 
 export default function BookVisitForm() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [sameAsPhone, setSameAsPhone] = useState(true);
 
   useEffect(() => {
@@ -25,6 +26,10 @@ export default function BookVisitForm() {
       .then((res) => (res.ok ? res.json() : []))
       .then(setPlans)
       .catch(() => setPlans([]));
+    fetch("/api/public/trainers")
+      .then((res) => (res.ok ? res.json() : []))
+      .then(setTrainers)
+      .catch(() => setTrainers([]));
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -211,9 +216,10 @@ export default function BookVisitForm() {
             className="mt-2 w-full rounded-lg border border-white/10 bg-zinc-950 px-4 py-2.5 text-sm text-white focus:border-blue-500 focus:outline-none"
           >
             <option value="">No preference</option>
-            {TRAINERS.map((trainer) => (
-              <option key={trainer.slug} value={trainer.slug}>
-                {trainer.name} — {trainer.role}
+            {trainers.map((trainer) => (
+              <option key={trainer.id} value={trainer.name}>
+                {trainer.name}
+                {trainer.specialization ? ` — ${trainer.specialization}` : ""}
               </option>
             ))}
           </select>
