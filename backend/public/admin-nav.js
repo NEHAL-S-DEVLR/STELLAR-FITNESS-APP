@@ -33,6 +33,7 @@ const ADMIN_NAV_GROUPS = [
       { key: 'plans',   href: '/plans.html',         icon: 'sell',           label: 'Plans',           requires: 'finance.view' },
       { key: 'gallery', href: '/gallery-admin.html', icon: 'photo_library',  label: 'Gallery',         requires: 'admin' },
       { key: 'workout', href: '/workout-plan.html',  icon: 'fitness_center', label: 'Default Workout', requires: 'workout.manage' },
+      { key: 'reels',   href: '/reels.html',         icon: 'movie',          label: 'Reel Requests',   requires: 'reels.manage' },
     ],
   },
   {

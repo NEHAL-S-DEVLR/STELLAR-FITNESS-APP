@@ -24,6 +24,7 @@ const BACKEND_PAGES = [
   "trainer-portal.html", "trainer-portal.js",
   "trainers.html", "trainers.js",
   "workout-plan.html", "workout-plan.js",
+  "reels.html", "reels.js",
 ];
 
 const nextConfig: NextConfig = {

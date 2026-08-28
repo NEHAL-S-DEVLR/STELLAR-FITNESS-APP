@@ -43,6 +43,8 @@
     { "source": "/trainers.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/workout-plan.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/workout-plan.js", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/reels.html", "destination": { "type": "service", "service": "backend" } },
+    { "source": "/reels.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/(.*)", "destination": { "type": "service", "service": "frontend" } }
   ]
 }

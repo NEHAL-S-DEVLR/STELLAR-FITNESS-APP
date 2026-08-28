@@ -418,6 +418,79 @@
       });
     });
   }
+  // ---- Reel requests
+  let reelRequests = [];
+  const REEL_STATUS_CHIP = { requested: 'info', scheduled: 'warning', completed: 'success', declined: 'error' };
+
+  async function loadReelRequests() {
+    try { reelRequests = await api('/api/member/reel-requests'); }
+    catch { reelRequests = []; }
+    renderReels();
+  }
+
+  function renderReels() {
+    const list = document.getElementById('reel-list');
+    const empty = document.getElementById('reel-empty');
+    if (!reelRequests.length) {
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = reelRequests.map(r => `
+      <div class="card" style="margin-bottom: 12px;">
+        <div class="flex" style="justify-content: space-between; align-items: flex-start; gap: 12px;">
+          <div>
+            ${r.message ? `<div class="body">${r.message}</div>` : '<div class="body" style="color: var(--md-on-surface-variant);">No message</div>'}
+            <div class="sub" style="margin-top: 4px;">${new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+          </div>
+          <span class="chip ${REEL_STATUS_CHIP[r.status] || ''}">${r.status[0].toUpperCase() + r.status.slice(1)}</span>
+        </div>
+        ${r.reelUrl
+          ? `<div class="body mt-12"><a href="${r.reelUrl}" target="_blank" rel="noopener">${r.reelUrl}</a></div>`
+          : `<div class="flex gap mt-12" style="align-items:center;">
+               <input type="url" class="reel-url-field" data-id="${r.id}" placeholder="Paste your reel URL once it's live" style="flex:1;" />
+               <button class="btn btn-tonal sm" data-save-url="${r.id}">Save</button>
+             </div>`
+        }
+      </div>
+    `).join('');
+
+    list.querySelectorAll('[data-save-url]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.saveUrl;
+        const input = list.querySelector(`.reel-url-field[data-id="${id}"]`);
+        const url = input.value.trim();
+        if (!url) return;
+        btn.disabled = true;
+        try {
+          await api(`/api/member/reel-requests/${id}`, { method: 'PATCH', body: { reel_url: url } });
+          await loadReelRequests();
+        } catch (e) {
+          alert(e.message);
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  document.getElementById('reel-request-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('reel-request-btn');
+    const message = document.getElementById('reel-message').value.trim();
+    const reel_url = document.getElementById('reel-url-input').value.trim();
+    btn.disabled = true;
+    try {
+      await api('/api/member/reel-requests', { method: 'POST', body: { message, reel_url } });
+      document.getElementById('reel-message').value = '';
+      document.getElementById('reel-url-input').value = '';
+      await loadReelRequests();
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   let photoMode = 'upload'; // or 'url'
   function setPhotoMode(mode) {
     photoMode = mode;
@@ -1139,4 +1212,5 @@
 
   await loadWorkoutLogs();
   renderAll();
+  await loadReelRequests();
 })();

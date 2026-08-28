@@ -81,6 +81,7 @@
       <div class="tab" data-tab="nutrition"><span class="material-symbols-rounded">restaurant</span>Nutrition</div>
       <div class="tab" data-tab="progress"><span class="material-symbols-rounded">trending_up</span>Progress</div>
       <div class="tab" data-tab="photos"><span class="material-symbols-rounded">photo_library</span>Photos</div>
+      <div class="tab" data-tab="reels"><span class="material-symbols-rounded">movie</span>Reels</div>
       <div class="tab" data-tab="attendance"><span class="material-symbols-rounded">event_available</span>Attendance</div>
       <div class="tab" data-tab="book"><span class="material-symbols-rounded">event</span>Book PT Session</div>
       <div class="tab" data-tab="finance"><span class="material-symbols-rounded">payments</span>Finance</div>
@@ -181,6 +182,40 @@
           </button>
         </div>
         <div class="photo-grid" id="photo-grid"></div>
+      </div>
+    </div>
+
+    <!-- Reels -->
+    <div class="tab-panel" id="panel-reels">
+      <div class="card">
+        <div class="card-header">
+          <h2>Request a Reel Shoot</h2>
+        </div>
+        <div class="body" style="margin-bottom: 12px;">
+          Want a reel filmed of you at the gym? Send a request below. Already made your own? Paste its link when you request, or come back and add it later.
+        </div>
+        <div class="field">
+          <label>Message (optional)</label>
+          <textarea id="reel-message" rows="2" placeholder="e.g. Want a reel of my deadlift PR"></textarea>
+        </div>
+        <div class="field">
+          <label>Reel URL (optional)</label>
+          <input type="url" id="reel-url-input" placeholder="https://instagram.com/reel/…" />
+        </div>
+        <button class="btn btn-filled" id="reel-request-btn">
+          <span class="material-symbols-rounded">movie</span> Send Request
+        </button>
+      </div>
+
+      <div class="card mt-18">
+        <div class="card-header">
+          <h2>Your Requests</h2>
+        </div>
+        <div id="reel-list"></div>
+        <div class="empty" id="reel-empty" style="display:none;">
+          <span class="material-symbols-rounded">movie</span>
+          No reel requests yet.
+        </div>
       </div>
     </div>
 

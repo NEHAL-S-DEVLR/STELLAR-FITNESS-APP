@@ -131,34 +131,163 @@ npm start
 
 ## API overview
 
-All endpoints return JSON. Send `Authorization: Bearer <token>` on any endpoint other than `/api/auth/*`.
+All endpoints return JSON. Send `Authorization: Bearer <token>` on any endpoint
+other than `/api/auth/*` and the handful of `publicSiteCors` public endpoints
+noted below. Most admin-side endpoints are gated by a specific permission key
+(shown in parens) rather than a hard role check — `role = 'admin'` always
+passes every check; a `staff` or `trainer` account needs that exact key in
+its granted `permissions` list (see **Permissions & Staff** below). Where no
+permission is shown, the route is either public, any-authenticated-user, or
+gated by role alone (e.g. `requireAdmin`, `requireTrainer`).
+
+This list is generated from `server.js`'s actual routes — if you add or
+remove an endpoint, update the matching line here in the same commit.
 
 ### Auth
 - `POST /api/auth/signup` — `{ name, email, password }` → `{ user, token }`
 - `POST /api/auth/login`  — `{ email, password }` → `{ user, token }`
 - `GET  /api/me`          — current user, fully hydrated
+- `PATCH /api/me`         — update own name / email / phone / goal / height
+- `POST /api/me/password` — change own password
 
-### Member self-service
-- `POST   /api/me/attendance`
+### Member self-service (`/api/me/*`)
+- `POST   /api/me/attendance` — self check-in
+- `GET    /api/me/gym-pass` — QR gym pass payload
 - `POST   /api/me/weight` `{ date, kg }`
 - `DELETE /api/me/weight/:date`
+- `GET    /api/me/workout-logs`
+- `POST   /api/me/workout-log`
 - `POST   /api/me/photos` `{ url, caption }`
+- `POST   /api/me/photos/upload` — multipart file upload
 - `DELETE /api/me/photos/:id`
 - `POST   /api/me/notifications/read-all`
+- `GET    /api/me/history` — own edit-log entries
+- `GET    /api/me/payments`
+- `POST   /api/me/payments/request`
+- `GET    /api/me/food` / `GET /api/me/food/summary`
+- `POST   /api/me/food` / `DELETE /api/me/food/:id`
+- `POST   /api/member/reel-requests` — ask for a reel shoot, optionally with a `reel_url` already in hand
+- `GET    /api/member/reel-requests` — own reel requests
+- `PATCH  /api/member/reel-requests/:id` — add/update the `reel_url` on an own request
+- `GET    /api/me/pt-context` — own trainer + remaining PT credits
+- `POST   /api/pt-bookings` / `GET /api/me/pt-bookings` / `DELETE /api/pt-bookings/:id`
+- `GET    /api/trainer/:trainerId/availability`
 
-### Admin (requires `role = 'admin'`)
+### Members (`members.manage`)
 - `GET    /api/admin/members` — list all members
 - `GET    /api/admin/members/:id` — full member
 - `POST   /api/admin/members` — create
-- `PATCH  /api/admin/members/:id` — update goal / height / name
+- `PATCH  /api/admin/members/:id` — update profile fields
+- `PATCH  /api/admin/members/:id/plan-level` — set which of the 4 default-plan levels a non-PT member sees (admin or trainer)
 - `DELETE /api/admin/members/:id`
-- `PUT    /api/admin/members/:id/workout` — body is the structured workout plan
-- `PUT    /api/admin/members/:id/nutrition`
-- `PUT    /api/admin/members/:id/subscription` — `{ plan, startDate, expiryDate }`
+- `GET    /api/admin/members/:id/gym-pass`
+- `GET    /api/admin/members/:id/history` — edit log
+- `POST   /api/admin/members/:id/whatsapp-reminder`
+- `POST   /api/admin/members/:id/renewal-message`
+- `POST   /api/admin/members/:id/send-credentials`
 - `POST   /api/admin/members/:id/attendance/toggle` — `{ date }`
-- `POST   /api/admin/broadcasts` — `{ type, title, body, recipientId | null }` (null = all members)
-- `GET    /api/admin/broadcasts`
-- `GET    /api/admin/insights`
+- `GET    /api/admin/members/:id/food` / `GET /api/admin/members/:id/food/summary`
+- `GET    /api/admin/food/today`
+- `PUT    /api/admin/members/:id/workout` / `PUT /api/admin/members/:id/nutrition` — admin-direct edit; requires `role=admin` **and** the member to have an active/completed PT assignment
+- `PUT    /api/admin/members/:id/subscription` — `{ plan, startDate, expiryDate }` (admin only)
+- `POST   /api/admin/upload` — generic multipart file upload (photo URLs, certificates, etc.), needs any of `members.manage`/`trainers.manage`/`pt.manage`; disabled on serverless deploys
+
+### Attendance & check-in (`attendance.manage`)
+- `GET  /api/admin/checkin-qr` / `POST /api/admin/checkin-qr/regenerate`
+- `POST /api/checkin` — scan-based check-in (any authenticated user)
+- `GET  /api/verify-member/:id` — public gym-pass verification
+
+### Broadcasts & notifications (`notifications.send`)
+- `POST /api/admin/broadcasts` — `{ type, title, body, recipientId | null }` (null = all members)
+- `GET  /api/admin/broadcasts`
+- `POST /api/admin/broadcasts/quote`
+
+### Insights & config
+- `GET /api/admin/insights` (`reports.view`)
+- `GET /api/config` — public runtime config (feature flags, etc.)
+- `GET /api/invoices/:id.pdf`
+
+### Finance — plans & payments (`finance.view`)
+- `GET    /api/plans` — active subscription plans (any authenticated user)
+- `GET    /api/public/plans` — same, public (marketing site pricing page)
+- `GET/POST/PATCH/DELETE /api/admin/plans` `/:id` — manage subscription plans
+- `GET    /api/admin/payments` — all payments
+- `POST   /api/admin/payments/:id/receipt`
+- `POST   /api/admin/payments/:id/approve`
+- `DELETE /api/admin/payments/:id`
+- `POST   /api/admin/members/:id/payments` — record a payment for a member
+- `GET    /api/admin/finance` — revenue/expense summary
+
+### Admissions (`finance.view`)
+- `GET    /api/admin/admissions/next-receipt`
+- `GET    /api/admin/admissions`
+- `POST   /api/admin/admissions` — new admission (creates the member if needed)
+- `DELETE /api/admin/admissions/:id`
+- `POST   /api/admin/admissions/:id/payment`
+
+### Leads — public site enquiries
+- `POST /api/leads` — public, `publicSiteCors` (Book Visit / Contact form submit)
+- `GET/PATCH/DELETE /api/admin/leads` `/:id` (`enquiries.manage`)
+
+### Gallery — public landing page (admin only, no granular permission)
+- `GET/POST/PATCH/DELETE /api/admin/gallery` `/:id`
+- `POST /api/admin/gallery/upload` — multipart file upload
+- `GET  /api/public/gallery` — public, `publicSiteCors`
+
+### Reel Requests (`reels.manage`)
+- `GET    /api/admin/reel-requests` — every member's request, newest first
+- `PATCH  /api/admin/reel-requests/:id` — `{ status }` (requested/scheduled/completed/declined)
+- `DELETE /api/admin/reel-requests/:id`
+- *(member-side endpoints are listed under Member self-service above)*
+
+### Default Workout Plans — 4 levels (`workout.manage`)
+- `GET  /api/admin/default-workout-plan` — all 4 level-plans
+- `PUT  /api/admin/default-workout-plan/:level` — `1`-`4`, replaces that level's plan
+- `POST /api/admin/default-workout-plan/whatsapp` — sends every active non-PT member *their own* level's plan
+
+### Batches (`batches.manage`)
+- `GET/POST/PATCH/DELETE /api/admin/batches` `/:id`
+
+### Permissions & Staff (admin only)
+- `GET /api/admin/permissions` — the full permission catalog + staff defaults
+- `GET/POST/PATCH/DELETE /api/admin/staff` `/:id` — staff accounts and their granted permissions
+- `POST /api/admin/staff/:id/send-credentials`
+
+### Trainers (`trainers.manage` to view/manage; create/edit/delete/credentials are admin-only)
+- `GET    /api/admin/trainers`
+- `GET    /api/admin/trainers/:id/stats`
+- `POST   /api/admin/trainers` — create (admin only)
+- `PATCH  /api/admin/trainers/:id` — including granted permissions (admin only)
+- `DELETE /api/admin/trainers/:id` (admin only)
+- `POST   /api/admin/trainers/:id/send-credentials` (admin only)
+
+### PT Packages & Assignments (`pt.manage`)
+- `GET/POST/PATCH/DELETE /api/admin/pt-packages` `/:id`
+- `GET/POST/PATCH/DELETE /api/admin/pt-assignments` `/:id`
+
+### Expenses (`expenses.manage`)
+- `GET/POST/PATCH/DELETE /api/admin/expenses` `/:id`
+- `GET /api/admin/expenses/summary`
+
+### Owner Dashboard & Reports (`reports.view`)
+- `GET /api/admin/dashboard`
+- `GET /api/admin/reports`
+- `GET /api/admin/reports/monthly-summary`
+
+### Trainer Portal (own clients — `requireTrainer`; earnings/`stats` also needs `trainer.earnings.view` unless admin)
+- `GET  /api/trainer/stats` — own PT client count + earnings
+- `GET  /api/trainer/clients` / `GET /api/trainer/clients/:id`
+- `PUT  /api/trainer/clients/:id/workout` / `PUT /api/trainer/clients/:id/nutrition`
+- `POST /api/trainer/clients/:id/workout/whatsapp` / `POST /api/trainer/clients/:id/nutrition/whatsapp`
+- `GET  /api/trainer/working-hours` / `PUT /api/trainer/working-hours`
+- `GET  /api/trainer/schedule-exceptions` / `POST` / `DELETE /:id`
+- `GET  /api/trainer/pt-bookings`
+
+### PT Booking (member-initiated, trainer-availability-aware)
+- `GET    /api/trainer/:trainerId/availability?from=&to=`
+- `POST   /api/pt-bookings` — books against the member's own active PT assignment
+- `GET    /api/me/pt-bookings`
+- `DELETE /api/pt-bookings/:id`
 
 ---
 

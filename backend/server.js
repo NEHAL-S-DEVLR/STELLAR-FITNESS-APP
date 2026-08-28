@@ -460,6 +460,21 @@ async function initSchema() {
     -- Which membership plan they said they're interested in, picked from the
     -- real admin-managed subscription_plans (not a free-text guess).
     ALTER TABLE leads ADD COLUMN IF NOT EXISTS interested_plan_id INTEGER REFERENCES subscription_plans(id) ON DELETE SET NULL;
+
+    -- Members can ask to be filmed for a promo reel, and can paste the
+    -- finished reel's URL (either right away, if they already made one
+    -- themselves, or later once it's posted) — both surface on one admin list.
+    CREATE TABLE IF NOT EXISTS reel_requests (
+      id         SERIAL PRIMARY KEY,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      message    TEXT,
+      reel_url   TEXT,
+      status     TEXT NOT NULL DEFAULT 'requested' CHECK (status IN ('requested','scheduled','completed','declined')),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS reel_requests_user_idx   ON reel_requests(user_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS reel_requests_status_idx ON reel_requests(status);
   `);
 
   // Migrate seed account emails to the new domain (idempotent — no-op once done)
@@ -1625,6 +1640,7 @@ const PERMISSION_CATALOG = [
   { key: 'finance.view',       label: 'View & record revenue/payments', group: 'Money' },
   { key: 'reports.view',       label: 'Reports (profit split, commissions)', group: 'Money' },
   { key: 'trainer.earnings.view', label: "View own PT clients & earnings (trainers only)", group: 'Team' },
+  { key: 'reels.manage',       label: 'Reel shoot requests',          group: 'Content' },
 ];
 const PERMISSION_KEYS = PERMISSION_CATALOG.map(p => p.key);
 const STAFF_DEFAULT_PERMISSIONS = ['members.manage', 'batches.manage', 'attendance.manage'];
@@ -3425,6 +3441,68 @@ app.get('/api/public/gallery', publicSiteCors, wrap(async (req, res) => {
     'SELECT id, category, title, image_url AS "imageUrl" FROM gallery_items ORDER BY sort_order, created_at DESC'
   );
   res.json(rows);
+}));
+
+// ============================== Reel Requests ==============================
+// A member asks to be filmed for a promo reel, and/or pastes the URL of a
+// finished reel (their own, or the one Stellar shot for them). Admin/staff
+// with `reels.manage` see every request in one list and move it through a
+// status (requested → scheduled → completed, or declined).
+app.post('/api/member/reel-requests', auth, wrap(async (req, res) => {
+  if (req.user.role !== 'member') return res.status(403).json({ error: 'Members only' });
+  const { message, reel_url } = req.body || {};
+  const row = await q1(
+    `INSERT INTO reel_requests (user_id, message, reel_url) VALUES ($1,$2,$3) RETURNING id`,
+    [req.user.id, (message || '').trim() || null, (reel_url || '').trim() || null]
+  );
+  res.json({ id: row.id });
+}));
+
+app.get('/api/member/reel-requests', auth, wrap(async (req, res) => {
+  if (req.user.role !== 'member') return res.status(403).json({ error: 'Members only' });
+  const rows = await q(
+    `SELECT id, message, reel_url AS "reelUrl", status, created_at AS "createdAt"
+     FROM reel_requests WHERE user_id = $1 ORDER BY created_at DESC`,
+    [req.user.id]
+  );
+  res.json(rows);
+}));
+
+app.patch('/api/member/reel-requests/:id', auth, wrap(async (req, res) => {
+  if (req.user.role !== 'member') return res.status(403).json({ error: 'Members only' });
+  const existing = await q1('SELECT id FROM reel_requests WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+  if (!existing) return res.status(404).json({ error: 'Not found' });
+  const { reel_url } = req.body || {};
+  await pool.query(
+    `UPDATE reel_requests SET reel_url = $1, updated_at = NOW() WHERE id = $2`,
+    [(reel_url || '').trim() || null, req.params.id]
+  );
+  res.json({ ok: true });
+}));
+
+app.get('/api/admin/reel-requests', auth, requirePermission('reels.manage'), wrap(async (req, res) => {
+  const rows = await q(`
+    SELECT r.id, r.message, r.reel_url AS "reelUrl", r.status, r.created_at AS "createdAt",
+           u.id AS "memberId", u.name AS "memberName", u.phone AS "memberPhone"
+    FROM reel_requests r
+    JOIN users u ON u.id = r.user_id
+    ORDER BY r.created_at DESC
+  `);
+  res.json(rows);
+}));
+
+app.patch('/api/admin/reel-requests/:id', auth, requirePermission('reels.manage'), wrap(async (req, res) => {
+  const { status } = req.body || {};
+  if (!['requested', 'scheduled', 'completed', 'declined'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  await pool.query(`UPDATE reel_requests SET status = $1, updated_at = NOW() WHERE id = $2`, [status, req.params.id]);
+  res.json({ ok: true });
+}));
+
+app.delete('/api/admin/reel-requests/:id', auth, requirePermission('reels.manage'), wrap(async (req, res) => {
+  await pool.query('DELETE FROM reel_requests WHERE id = $1', [req.params.id]);
+  res.json({ ok: true });
 }));
 
 // ============================== Default Workout Plans (4 levels) ==============================
