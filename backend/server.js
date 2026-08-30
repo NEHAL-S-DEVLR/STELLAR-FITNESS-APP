@@ -4393,6 +4393,69 @@ app.get('/api/admin/reports/monthly-summary', auth, requirePermission('reports.v
   res.json({ companyName: COMPANY_NAME, partnerName, months: rows });
 }));
 
+// ============================== Scheduled Backups ============================
+// Every 20 days, dumps every table in the public schema to a single encrypted
+// file in Vercel Blob storage. Triggered by a Vercel Cron hitting this route
+// once a day (Hobby plan's minimum interval) — most days it's a no-op because
+// the last backup isn't due yet, so the daily hit costs nothing meaningful.
+const BACKUP_INTERVAL_MS = 20 * 24 * 60 * 60 * 1000;
+
+function backupEncryptionKey() {
+  const secret = process.env.BACKUP_ENCRYPTION_KEY;
+  if (!secret) throw new Error('BACKUP_ENCRYPTION_KEY is not set');
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
+function encryptBuffer(buf) {
+  const key = backupEncryptionKey();
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(buf), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  // Layout: [12-byte iv][16-byte auth tag][ciphertext] so the file is
+  // self-contained — nothing besides the key needs to be stored alongside it.
+  return Buffer.concat([iv, authTag, encrypted]);
+}
+
+// Single fixed path — each new backup replaces the previous one instead of
+// piling up. We delete the old blob explicitly before uploading the new one
+// (this Blob SDK version doesn't support overwrite-in-place).
+const BACKUP_PATH = 'backups/latest.json.gz.enc';
+
+app.get('/api/cron/backup', wrap(async (req, res) => {
+  if (process.env.CRON_SECRET) {
+    if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ error: 'Not authorized' });
+    }
+  }
+
+  const { list, put, del } = require('@vercel/blob');
+  const { blobs } = await list({ prefix: BACKUP_PATH });
+  const existing = blobs.find(b => b.pathname === BACKUP_PATH);
+  if (existing && Date.now() - new Date(existing.uploadedAt).getTime() < BACKUP_INTERVAL_MS) {
+    return res.json({ skipped: true, reason: 'not due yet', lastBackupAt: existing.uploadedAt });
+  }
+
+  const tables = await q(`SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`);
+  const dump = { _exportedAt: new Date().toISOString() };
+  for (const { tablename } of tables) {
+    dump[tablename] = await q(`SELECT * FROM "${tablename}"`);
+  }
+
+  const zlib = require('zlib');
+  const gz = zlib.gzipSync(Buffer.from(JSON.stringify(dump)));
+  const encrypted = encryptBuffer(gz);
+
+  if (existing) await del(existing.url);
+  const blob = await put(BACKUP_PATH, encrypted, {
+    access: 'public',
+    addRandomSuffix: false,
+    contentType: 'application/octet-stream',
+  });
+
+  res.json({ ok: true, url: blob.url, tables: Object.keys(dump).length - 1, bytes: encrypted.length });
+}));
+
 // ============================== Trainer Portal ==============================
 
 // A trainer's own earnings/commission — same numbers admin sees on the

@@ -46,5 +46,8 @@
     { "source": "/reels.html", "destination": { "type": "service", "service": "backend" } },
     { "source": "/reels.js", "destination": { "type": "service", "service": "backend" } },
     { "source": "/(.*)", "destination": { "type": "service", "service": "frontend" } }
+  ],
+  "crons": [
+    { "path": "/api/cron/backup", "schedule": "0 3 * * *" }
   ]
 }
