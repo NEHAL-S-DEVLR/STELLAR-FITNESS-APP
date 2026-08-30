@@ -4447,13 +4447,29 @@ app.get('/api/cron/backup', wrap(async (req, res) => {
   const encrypted = encryptBuffer(gz);
 
   if (existing) await del(existing.url);
-  const blob = await put(BACKUP_PATH, encrypted, {
-    access: 'public',
+  await put(BACKUP_PATH, encrypted, {
+    access: 'private',
     addRandomSuffix: false,
     contentType: 'application/octet-stream',
   });
 
-  res.json({ ok: true, url: blob.url, tables: Object.keys(dump).length - 1, bytes: encrypted.length });
+  res.json({ ok: true, tables: Object.keys(dump).length - 1, bytes: encrypted.length });
+}));
+
+// Lets an admin download the current backup file (it's private in Blob
+// storage, so it can't be fetched by a plain URL — this route authenticates
+// with the same server-side credentials the cron job uses, then streams it
+// through). Download it, then run backend/scripts/decrypt-backup.js on it.
+app.get('/api/admin/backup/download', auth, requireAdmin, wrap(async (req, res) => {
+  const { get } = require('@vercel/blob');
+  const result = await get(BACKUP_PATH, {});
+  if (!result || result.statusCode !== 200) {
+    return res.status(404).json({ error: 'No backup found yet' });
+  }
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Disposition', 'attachment; filename="backup.json.gz.enc"');
+  const { Readable } = require('stream');
+  Readable.fromWeb(result.stream).pipe(res);
 }));
 
 // ============================== Trainer Portal ==============================

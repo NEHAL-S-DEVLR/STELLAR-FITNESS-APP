@@ -3,8 +3,9 @@
 // Usage:
 //   BACKUP_ENCRYPTION_KEY=<the key from Vercel env vars> node scripts/decrypt-backup.js <downloaded-file.json.gz.enc> [output.json]
 //
-// Download the file first from the URL the backup endpoint returns (or from
-// the Vercel Blob dashboard, under Storage), then run this locally.
+// Download the file first by visiting /api/admin/backup/download while
+// logged in as an admin (the backup is private in Blob storage, so this
+// authenticated route is the only way to fetch it), then run this locally.
 
 const fs = require('fs');
 const path = require('path');
