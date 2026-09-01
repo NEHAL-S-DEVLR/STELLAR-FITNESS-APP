@@ -75,6 +75,13 @@ export default function AccountScreen({ user, onSaved, onLogout, baseUrl, naviga
         variant="tonal"
         onPress={() => navigation.navigate('MemberPayments')}
         icon={<Ionicons name="receipt" size={18} color={colors.onPrimaryContainer} />}
+        style={{ marginBottom: 10 }}
+      />
+      <Button
+        label="Reel Shoot Request"
+        variant="tonal"
+        onPress={() => navigation.navigate('ReelRequests')}
+        icon={<Ionicons name="videocam" size={18} color={colors.onPrimaryContainer} />}
       />
 
       <Button

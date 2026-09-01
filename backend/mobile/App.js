@@ -51,6 +51,7 @@ import MemberPaymentsScreen from './src/screens/MemberPaymentsScreen';
 import AdminPlansScreen from './src/screens/AdminPlansScreen';
 import AdminGalleryScreen from './src/screens/AdminGalleryScreen';
 import AdminDefaultWorkoutScreen from './src/screens/AdminDefaultWorkoutScreen';
+import ReelRequestsScreen from './src/screens/ReelRequestsScreen';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -116,6 +117,7 @@ export default function App() {
             <RootStack.Screen name="AdminReports" component={AdminReportsScreen} options={{ headerShown: true, title: 'Reports' }} />
             <RootStack.Screen name="MemberProgress" component={MemberProgressScreen} options={{ headerShown: true, title: 'Progress' }} />
             <RootStack.Screen name="MemberPayments" component={MemberPaymentsScreen} options={{ headerShown: true, title: 'Payment History' }} />
+            <RootStack.Screen name="ReelRequests" component={ReelRequestsScreen} options={{ headerShown: true, title: 'Reel Shoot Request' }} />
             <RootStack.Screen name="AdminPlans" component={AdminPlansScreen} options={{ headerShown: true, title: 'Plans' }} />
             <RootStack.Screen name="AdminGallery" component={AdminGalleryScreen} options={{ headerShown: true, title: 'Gallery' }} />
             <RootStack.Screen name="AdminTrainerDetail" component={AdminTrainerDetailScreen} options={{ headerShown: true, title: '' }} />
